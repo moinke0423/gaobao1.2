@@ -1,0 +1,3305 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>内蒙古高考志愿填报智能推荐系统</title>
+<style>
+:root{
+  --bg-page:#F5F2EC; --bg-card:#FFFFFF; --bg-warm:#F7F5F1;
+  --primary:#7A8CA6; --primary-dark:#5E708C; --primary-light:#A3B3C8;
+  --secondary:#9CAF9A; --tertiary:#C8A2A8;
+  --text-primary:#3A3A3A; --text-secondary:#6B6B6B; --text-muted:#999999;
+  --border:#E8E4DC; --danger:#B05A50;
+  --shadow-soft:0 2px 12px rgba(0,0,0,0.06); --shadow-card:0 4px 16px rgba(0,0,0,0.08);
+  --radius-sm:6px; --radius-md:10px; --radius-lg:14px;
+  --tier-1-bg:#E8C4C0; --tier-1-text:#8C4A45;
+  --tier-2-bg:#E8CFA8; --tier-2-text:#8C6A3A;
+  --tier-3-bg:#D4C27A; --tier-3-text:#6B5D2C;
+  --tier-4-bg:#B8CD7A; --tier-4-text:#5A6B2C;
+  --tier-5-bg:#A5C4A0; --tier-5-text:#3D6B3A;
+  --tier-6-bg:#8FB8B0; --tier-6-text:#2D5C55;
+  --tier-7-bg:#8FA8C4; --tier-7-text:#3A506B;
+}
+*{box-sizing:border-box;margin:0;padding:-webkit-tap-highlight-color:transparent;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  background:var(--bg-page);color:var(--text-primary);
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+a{color:var(--primary);text-decoration:none;word-break:break-all}
+a:hover{color:var(--primary-dark)}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:inherit;color:var(--text-primary)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* 导航 */
+.nav-bar{position:sticky;top:0;z-index:100;background:rgba(245,242,236,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nav-logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:600;color:var(--primary-dark)}
+.nav-logo-icon{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0}
+.nav-links{display:flex;gap:4px;overflow-x:auto;max-width:70%}
+.nav-links a{padding:7px 13px;border-radius:var(--radius-md);color:var(--text-secondary);white-space:nowrap;font-size:14.5px}
+.nav-links a.active{background:var(--primary);color:#fff}
+.nav-links a:hover{background:var(--bg-warm)}
+
+/* 布局 */
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.page{display:none}
+.page.active{display:block}
+.card{background:var(--bg-card);border-radius:var(--radius-lg);box-shadow:var(--shadow-soft);padding:22px;margin-bottom:18px}
+.card h2{font-size:19px;margin-bottom:14px;color:var(--primary-dark)}
+.card h3{font-size:16px;margin:12px 0 8px}
+.muted{color:var(--text-muted);font-size:13.5px}
+.sec{color:var(--text-secondary)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 22px;border-radius:var(--radius-md);font-size:15px;font-weight:500;transition:opacity .2s}
+.btn:active{opacity:.8}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-secondary{background:var(--secondary);color:#fff}
+.btn-outline{border:1.5px solid var(--primary);color:var(--primary)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-block{width:100%}
+
+/* 表单 */
+.form-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.form-group{flex:1;min-width:160px}
+.form-group label{display:block;font-size:13.5px;color:var(--text-secondary);margin-bottom:5px;font-weight:500}
+.form-group input,.form-group select{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:var(--bg-warm);outline:none;font-size:15px}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary);background:#fff}
+.seg{display:flex;background:var(--bg-warm);border-radius:var(--radius-md);padding:4px;gap:4px}
+.seg button{flex:1;padding:9px 6px;border-radius:8px;color:var(--text-secondary);font-size:14.5px}
+.seg button.on{background:var(--primary);color:#fff;font-weight:500}
+
+/* 结果页 */
+.stat-bar{display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;margin-bottom:6px}
+.stat-chip{flex-shrink:0;padding:10px 14px;border-radius:var(--radius-md);text-align:center;min-width:92px;cursor:pointer;border:2px solid transparent}
+.stat-chip .n{font-size:22px;font-weight:700;line-height:1.2}
+.stat-chip .t{font-size:12.5px;margin-top:2px}
+.stat-chip.on{border-color:var(--text-primary)}
+.t1{background:var(--tier-1-bg);color:var(--tier-1-text)} .t2{background:var(--tier-2-bg);color:var(--tier-2-text)}
+.t3{background:var(--tier-3-bg);color:var(--tier-3-text)} .t4{background:var(--tier-4-bg);color:var(--tier-4-text)}
+.t5{background:var(--tier-5-bg);color:var(--tier-5-text)} .t6{background:var(--tier-6-bg);color:var(--tier-6-text)}
+.t7{background:var(--tier-7-bg);color:var(--tier-7-text)}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;line-height:1.6}
+a.sc-name{color:var(--text-primary);border-bottom:1px dashed var(--primary-light)}
+a.sc-name:hover{color:var(--primary-dark);border-bottom-color:var(--primary-dark)}
+.school-card{background:var(--bg-card);border-radius:var(--radius-lg);box-shadow:var(--shadow-soft);margin-bottom:16px;overflow:hidden}
+.sc-head{padding:15px 18px 10px}
+.sc-title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.sc-name{font-size:17px;font-weight:700}
+.sc-meta{font-size:13px;color:var(--text-secondary);margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 14px}
+.sc-scores{display:flex;gap:18px;flex-wrap:wrap;padding:8px 18px;background:var(--bg-warm);font-size:13.5px}
+.sc-scores b{font-size:15px}
+.major-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.major-table th{background:#FAF8F4;color:var(--text-secondary);font-weight:500;padding:8px 10px;text-align:left;white-space:nowrap;font-size:12.5px}
+.major-table td{padding:9px 10px;border-top:1px solid var(--border);vertical-align:top}
+.major-table tr.tier-group-head td{background:#F4F1EC;font-weight:700;padding:7px 10px;border-top:2px solid var(--border)}
+.major-scroll{overflow-x:auto}
+.tier-tag{padding:1px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.fluct{color:var(--tertiary);font-weight:600}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.filters select,.filters input{padding:8px 11px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:#fff;font-size:14px;outline:none}
+.pager{display:flex;gap:10px;justify-content:center;margin:16px 0}
+
+/* 筛选面板（首页筛选偏好） + 结果页 + 志愿表 */
+#f-kw{width:100%;padding:9px 11px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:#fff;font-size:14px;outline:none}
+#f-kw:focus{border-color:var(--primary)}
+.fs-group{border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:8px;background:#FAF8F4}
+.fs-group>summary{cursor:pointer;padding:9px 11px;font-size:14px;font-weight:600;list-style:none;display:flex;align-items:center;gap:6px}
+.fs-group>summary::-webkit-details-marker{display:none}
+.fs-group>summary:after{content:'▾';margin-left:auto;color:var(--text-muted);font-weight:400}
+.fs-group[open]>summary:after{content:'▴'}
+.fs-list{padding:2px 10px 10px;font-size:13.5px}
+.fs-sub{margin:7px 0 4px}
+.fs-all-lb{display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0}
+.fs-all-lb b{font-size:13.5px}
+.fs-all-lb .muted{font-weight:400}
+.fs-prov{margin-left:20px;display:flex;flex-direction:column}
+.fs-prov label{display:flex;gap:6px;align-items:center;cursor:pointer;padding:2px 0}
+.fs-cnt{font-size:12px;color:var(--primary);font-weight:700}
+.stat-chip.zero{opacity:.4}
+.cd{font-family:Consolas,'Courier New',monospace;font-weight:700;letter-spacing:.5px}
+.p-low{background:#C8A2A8;color:#4A2830}.p-mid{background:#C8B87A;color:#5A4A20}.p-high{background:#9CAF9A;color:#2D4630}
+.wish-btn{border:1.5px solid var(--secondary);color:var(--secondary);border-radius:99px;padding:3px 12px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.wish-btn.on{background:var(--secondary);color:#fff}
+.wish-bar{position:fixed;right:18px;bottom:18px;z-index:120;background:var(--bg-card);border-radius:99px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:10px 14px 10px 20px;display:flex;align-items:center;gap:12px;font-size:14px}
+.wish-bar b{color:var(--primary-dark);font-size:16px}
+#wish-mask{position:fixed;inset:0;background:rgba(40,38,34,.45);z-index:130}
+#wish-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(700px,94vw);max-height:82vh;overflow-y:auto;background:var(--bg-card);border-radius:var(--radius-lg);box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:140;padding:20px}
+.wish-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);font-size:13.5px;flex-wrap:wrap}
+.wish-row .idx{width:26px;color:var(--text-muted);flex-shrink:0}
+.wish-row .del{color:var(--danger);font-size:12.5px;padding:2px 8px;border:1px solid var(--border);border-radius:99px}
+.wish-empty{text-align:center;color:var(--text-muted);padding:30px 0}
+/* 院校彩色气泡标签 */
+.sc-tags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 2px}
+.tag{padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:600;white-space:nowrap;line-height:1.5}
+.tg-985{background:#B05A50;color:#fff}
+.tg-211{background:#C97B4A;color:#fff}
+.tg-dl{background:#8E7CB0;color:#fff}
+.tg-by{background:#6B9A78;color:#fff}
+.tg-ss{background:#7A8CA6;color:#fff}
+.tg-bs{background:#4E7F96;color:#fff}
+.tg-gong{background:#E8EBE4;color:#4A5D4E;border:1px solid #B9C6B4}
+.tg-min{background:#F2E6D8;color:#7A5A38;border:1px solid #D4B483}
+.tg-line{background:var(--bg-warm);color:var(--text-secondary);border:1px solid var(--border);font-weight:500}
+/* 保研率标签与弹窗 */
+.byr-tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;line-height:1.6;background:#E8F0FA;color:#2A5C8A;border:1px solid #C8DEF0;cursor:pointer;transition:background .15s;vertical-align:middle}
+.byr-tag:hover{background:#D0E2F5}
+.byr-tag.byr-none{background:#F0F0EC;color:#999;border-color:#E0E0DC;cursor:default}
+.byr-tag.byr-none:hover{background:#F0F0EC}
+#byr-mask{position:fixed;inset:0;background:rgba(40,38,34,.45);z-index:130}
+#byr-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,92vw);max-height:72vh;overflow-y:auto;background:var(--bg-card);border-radius:var(--radius-lg);box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:140;padding:20px}
+.byr-detail-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid var(--border);font-size:14px}
+.byr-detail-row .byr-val{font-weight:700;font-size:17px}
+.byr-pred-tag{display:inline-block;padding:1px 7px;border-radius:99px;font-size:11px;font-weight:700;background:var(--primary);color:#fff;margin-left:6px}
+/* 保研率筛选下拉框美化 */
+#f-byr{padding:5px 12px;border:1.5px solid #C8DEF0;border-radius:99px;background:linear-gradient(135deg,#E8F0FA,#F0F7FF);color:#2A5C8A;font-weight:600;font-size:13px;cursor:pointer;outline:none;transition:all .15s;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%232A5C8A' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+#f-byr:hover{border-color:#3A8DD8;box-shadow:0 2px 8px rgba(58,141,216,0.15)}
+#f-byr option{background:#fff;color:#3A3A3A;padding:4px 8px}
+#f-byr option[value="-1"]{color:#5DBB63;font-weight:700}
+#f-byr option[value="30"]{color:#D9534F;font-weight:700}
+#f-byr option[value="25"]{color:#B06A3A}
+#f-byr option[value="20"]{color:#6B5D2C}
+#f-byr option[value="15"]{color:#5A6B2C}
+#f-byr option[value="10"]{color:#3D6B3A}
+#f-byr option[value="8"]{color:#356447}
+#f-byr option[value="5"]{color:#2D5C55}
+#f-byr option[value="3"]{color:#2A5060}
+/* 排序下拉框美化（绿色胶囊，与保研率蓝色胶囊同构呼应） */
+#f-sort{padding:5px 12px;border:1.5px solid #C2DEC6;border-radius:99px;background:linear-gradient(135deg,#E9F5EB,#F3FAF4);color:#2E6B3E;font-weight:600;font-size:13px;cursor:pointer;outline:none;transition:all .15s;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%232E6B3E' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+#f-sort:hover{border-color:#4C9A5F;box-shadow:0 2px 8px rgba(76,154,95,0.15)}
+#f-sort option{background:#fff;color:#3A3A3A;padding:4px 8px}
+/* 卡片近三年数据表 */
+.yr3{border-collapse:collapse;font-size:12.5px;margin:4px 0}
+.yr3 th,.yr3 td{border:1px solid var(--border);padding:3px 12px;text-align:center;white-space:nowrap}
+.yr3 th{background:var(--bg-warm);font-weight:600}
+.yr3 .yl{background:var(--bg-warm);color:var(--text-secondary);font-weight:500;font-size:12px}
+.yr3 td.na{color:var(--text-muted)}
+/* 考生管理栏 */
+.stu-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--bg-warm);border-radius:var(--radius-md);padding:12px 14px;margin-bottom:4px}
+.form-group input,.form-group select{width:100%;box-sizing:border-box}
+#hist-mask{position:fixed;inset:0;background:rgba(40,38,34,.45);z-index:130}
+#hist-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(760px,94vw);max-height:82vh;overflow-y:auto;background:var(--bg-card);border-radius:var(--radius-lg);box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:140;padding:20px}
+.hist-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border);font-size:13.5px;flex-wrap:wrap}
+.hist-row .ht{font-weight:600}
+/* 横版筛选：三列并排，列内独立滚动 */
+.hf-grid{display:grid;grid-template-columns:1fr 0.7fr 1.3fr;gap:12px;align-items:start}
+.hf-col{border:1px solid var(--border);border-radius:var(--radius-md);background:#FAF8F4;padding:10px 12px;max-height:430px;overflow-y:auto}
+.hf-col>h4{margin:0 0 8px;font-size:14px}
+.hf-regions{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+/* 省→城市 折叠块 */
+.prov-blk{border-bottom:1px dashed var(--border);padding:3px 0}
+.prov-blk:last-child{border-bottom:none}
+.prov-row{display:flex;align-items:center;gap:6px}
+.prov-row label{display:flex;gap:6px;align-items:center;cursor:pointer;font-size:12.5px;flex:1}
+.prov-blk.open>.mcat-subs{display:flex}
+.hf-lv{display:flex;flex-direction:column;gap:7px;font-size:13.5px}
+.hf-lv label{display:flex;gap:7px;align-items:center;cursor:pointer}
+.mcat{border-bottom:1px dashed var(--border);padding:5px 0}
+.mcat-row{display:flex;align-items:center;gap:6px}
+.mcat-row label{display:flex;gap:6px;align-items:center;cursor:pointer;font-weight:600;font-size:13.5px;flex:1}
+.mcat-exp{border:1px solid var(--border);background:#fff;border-radius:6px;font-size:11.5px;color:var(--text-secondary);padding:1px 8px;cursor:pointer;white-space:nowrap}
+.mcat-subs{display:none;flex-direction:column;margin:3px 0 3px 20px;font-size:12.5px}
+.mcat.open .mcat-subs{display:flex}
+.mcat-subs label{display:flex;gap:6px;align-items:center;padding:2px 0;cursor:pointer}
+/* 三级专业筛选：门类 → 大类 → 专业 */
+.gcat{border:1px solid var(--border);border-radius:8px;margin-bottom:7px;background:#fff;overflow:hidden}
+.gcat-row{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#F0EEE8}
+.gcat-row label{display:flex;gap:6px;align-items:center;cursor:pointer;font-size:13.5px;flex:1}
+.g-exp{border:1px solid var(--border);background:#fff;border-radius:6px;font-size:11.5px;color:var(--text-secondary);padding:1px 8px;cursor:pointer;white-space:nowrap}
+.g-subs{display:none;padding:2px 8px 5px 12px}
+.gcat.open .g-subs{display:block}
+.gcat .mcat:last-child{border-bottom:none}
+@media(max-width:860px){.hf-grid{grid-template-columns:1fr 1fr;gap:8px}.hf-col{max-height:280px}}
+/* 近三年彩色数据带（卡片中部居中、加大） */
+.yr-band{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px 18px;background:linear-gradient(180deg,#FAF8F4,#F4F1EA)}
+.yr-card{border-radius:12px;padding:14px 10px 12px;text-align:center;color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.yr-card.y1{background:linear-gradient(135deg,#6B9A78,#55805F)}
+.yr-card.y2{background:linear-gradient(135deg,#7A8CA6,#637389)}
+.yr-card.y3{background:linear-gradient(135deg,#C09A6A,#A8835A)}
+.yr-card .yy{font-size:13.5px;opacity:.92;font-weight:600}
+.yr-card .ss{font-size:27px;font-weight:800;line-height:1.25;margin:2px 0}
+.yr-card .rr{font-size:12.5px;opacity:.95}
+.yr-card .nn{font-size:11.5px;opacity:.85;margin-top:2px}
+.yr-card.na{background:repeating-linear-gradient(45deg,#ECE8E0,#ECE8E0 8px,#F6F3EC 8px,#F6F3EC 16px);color:var(--text-muted);box-shadow:none;border:1px dashed var(--border)}
+.yr-card.na .ss{font-size:18px}
+.yr-summary{padding:7px 18px;background:var(--bg-warm);font-size:13px}
+@media(max-width:720px){.yr-band{grid-template-columns:1fr}}
+
+/* 进度 */
+.progress-wrap{background:var(--bg-warm);border-radius:var(--radius-md);padding:12px 14px;margin:10px 0}
+.progress-track{height:8px;background:var(--border);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:99px;transition:width .3s}
+.progress-text{font-size:13px;color:var(--text-secondary);margin-top:6px}
+.log-box{background:#2E2C29;color:#D8D4CC;border-radius:var(--radius-md);padding:12px;font-size:12.5px;font-family:Consolas,monospace;max-height:260px;overflow-y:auto;white-space:pre-wrap;margin-top:10px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--primary-light);border-top-color:var(--primary);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* 首页hero */
+.hero{background:linear-gradient(135deg,#7A8CA6 0%,#9CAF9A 100%);border-radius:var(--radius-lg);color:#fff;padding:30px 24px;margin-bottom:20px}
+.hero h1{font-size:23px;margin-bottom:8px}
+.hero p{opacity:.92;font-size:14.5px;max-width:640px}
+.tier-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.tier-legend span{padding:3px 11px;border-radius:99px;font-size:12.5px}
+.info-note{background:#FDF6EC;border-left:4px solid #D4B483;padding:10px 14px;border-radius:6px;font-size:13.5px;color:#7A6540;margin:10px 0}
+.empty-tip{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.crumb{font-size:13.5px;color:var(--text-secondary);margin-bottom:12px}
+/* 详情页 */
+.slope-wrap{overflow-x:auto}
+.slope-legend{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:12.5px;color:var(--text-secondary);margin-top:8px}
+.up{color:#3D6B3A;font-weight:600}.down{color:#B05A50;font-weight:600}
+.eq-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.eq-cell{background:var(--bg-warm);border-radius:var(--radius-md);padding:12px;text-align:center}
+.eq-cell.base{outline:2px solid var(--primary)}
+.eq-cell .y{font-size:13px;color:var(--text-secondary)}.eq-cell .v{font-size:21px;font-weight:700}
+.eq-cell .d{font-size:12.5px;margin-top:2px}
+details.grp{border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:10px;background:var(--bg-card)}
+details.grp summary{cursor:pointer;padding:11px 14px;font-weight:500;list-style:none;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+details.grp summary::-webkit-details-marker{display:none}
+details.grp summary:after{content:'展开专业明细 ▾';margin-left:auto;font-size:12.5px;color:var(--text-muted);font-weight:400}
+details.grp[open] summary:after{content:'收起 ▴'}
+details.grp .grp-body{padding:0 12px 12px}
+/* 结果页"已选筛选"折叠块 */
+details.fsum{border:1px solid var(--border);border-radius:8px;background:#FAF8F4;padding:6px 10px;font-size:13px}
+details.fsum summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;font-weight:600}
+details.fsum summary::-webkit-details-marker{display:none}
+details.fsum summary:after{content:'展开 ▾';margin-left:auto;font-size:12px;color:var(--text-muted);font-weight:400}
+details.fsum[open] summary:after{content:'收起 ▴'}
+details.fsum .fsum-body{margin-top:6px;line-height:1.7;color:var(--text-secondary)}
+.crumb a{margin:0 4px}
+/* ===== 院校详情页专用：规则提示 / 位次输入 / 难度对比图 / 专业组卡片 / 志愿备选侧栏 ===== */
+.sd-cols{display:flex;gap:18px;align-items:flex-start}
+.sd-left{flex:1;min-width:0}
+.sd-side{width:302px;flex-shrink:0;position:sticky;top:74px}
+@media(max-width:1020px){.sd-cols{flex-direction:column}.sd-side{position:static;width:100%}}
+.sd-rule{background:#FFF7E6;border:1.5px solid #E8CFA8;border-left:6px solid #D6904A;border-radius:var(--radius-md);padding:12px 16px;font-size:14.5px;line-height:1.8;color:#6B4A22}
+.sd-rule b{color:#A05A20}
+.sd-rankrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:var(--bg-warm);border-radius:var(--radius-md)}
+.sd-rankrow label{font-weight:600;font-size:14px;color:var(--text-primary);white-space:nowrap}
+.sd-rankrow input{width:180px;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-size:15px;outline:none}
+.sd-rankrow input:focus{border-color:var(--primary)}
+.sd-grp-head{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.sd-grp-title{font-size:17px;font-weight:700;color:var(--primary-dark);margin-right:6px}
+.sd-grp-data{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--text-secondary);margin:6px 0}
+.sd-grp-data b{font-size:15.5px;color:var(--text-primary)}
+.sd-minibar{margin:10px 0 2px;max-width:520px}
+.sd-minibar-track{position:relative;display:flex;height:10px;border-radius:99px}
+.sd-seg{flex:1}
+.sd-seg:first-child{border-radius:99px 0 0 99px}
+.sd-seg:last-child{border-radius:0 99px 99px 0}
+.sd-marker{position:absolute;top:-4px;width:3px;height:18px;background:var(--text-primary);border-radius:2px;box-shadow:0 0 0 2px #fff;transform:translateX(-50%)}
+.sd-minibar-scale{display:flex;font-size:11px;color:var(--text-muted);margin-top:3px}
+.sd-minibar-scale span{flex:1;text-align:center}
+.sd-grp-tip{margin:10px 0;padding:8px 12px;background:#F0F4FA;border-radius:var(--radius-md);font-size:13px;color:#3A506B}
+.sd-major-list{max-height:260px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-md)}
+.sd-major-list table{margin:0}
+.sd-grp-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.sd-side-card h3{margin:0 0 10px}
+.sd-side-count{font-size:14px;margin-bottom:6px}
+.sd-side-count b{font-size:22px;color:var(--primary-dark)}
+.sd-side-bar{height:8px;background:var(--bg-warm);border-radius:99px;overflow:hidden;margin-bottom:10px}
+.sd-side-bar span{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:99px}
+.sd-side-tiers{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.sd-side-tiers .badge{font-size:11.5px;padding:2px 7px}
+.sd-side-list{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.sd-side-row{display:flex;align-items:center;gap:6px;font-size:13px;background:var(--bg-warm);border-radius:var(--radius-md);padding:6px 8px}
+.sd-side-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sd-side-del{border:none;background:none;color:var(--text-muted);cursor:pointer;font-size:14px;padding:2px 4px}
+.sd-side-del:hover{color:var(--danger)}
+.sd-tr-note{background:#F0F4FA;border-radius:var(--radius-md);padding:10px 14px;font-size:13.5px;color:#3A506B;margin-bottom:12px;line-height:1.7}
+.sd-tr-fallback{background:#FFF7E6;border:1.5px solid #E8CFA8;border-radius:var(--radius-md);padding:10px 14px;font-size:14px;margin-bottom:10px;color:#6B4A22}
+#sdtr-mask{position:fixed;inset:0;background:rgba(40,38,34,.45);z-index:130}
+#sdtr-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(780px,94vw);max-height:84vh;overflow-y:auto;background:var(--bg-card);border-radius:var(--radius-lg);box-shadow:0 12px 40px rgba(0,0,0,.25);z-index:140;padding:20px}
+.footer{border-top:1px solid var(--border);margin-top:30px;padding:22px 20px 34px;text-align:center;color:var(--text-muted);font-size:13px}
+.tag-mini{display:inline-block;padding:0 6px;border:1px solid var(--border);border-radius:4px;font-size:11.5px;color:var(--text-secondary);margin-left:4px;white-space:nowrap}
+@media(max-width:720px){
+  .container{padding:14px}
+  .nav-inner{padding:10px 12px}
+  .nav-logo span.lt{display:none}
+  .card{padding:16px}
+  .hero{padding:22px 18px}
+  .hero h1{font-size:20px}
+  .hero p{font-size:13.5px}
+  .nav-links{max-width:100%;flex:1}
+  .nav-links a{padding:7px 10px;font-size:13.5px}
+  .major-table td,.major-table th{padding:7px 8px}
+  .stat-chip{min-width:82px;padding:8px 10px}
+  .stat-chip .n{font-size:19px}
+  .sc-head{padding:13px 14px 10px}
+  .yr-band{padding:12px 14px}
+  .stu-bar{padding:10px 12px}
+  .stu-bar .btn{padding:9px 14px;font-size:13.5px}
+  .wish-btn{padding:3px 10px;font-size:12px}
+  #f-sort,#f-byr{max-width:46vw}
+  .byr-detail-row{font-size:13.5px}
+  #byr-modal,#hist-modal,#wish-modal{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav-bar"><div class="nav-inner">
+  <div class="nav-logo"><div class="nav-logo-icon">蒙</div><span class="lt">内蒙古高考志愿智能推荐</span></div>
+  <div class="nav-links">
+    <a href="#/" data-page="home">首页</a>
+    <a href="#/results" data-page="results">推荐结果</a>
+    <a href="#/browse" data-page="browse">历年数据</a>
+    <a href="#/test" data-page="test">性格测评</a>
+    <a href="#/data" data-page="data">数据中心</a>
+    <a href="#/about" data-page="about">关于</a>
+  </div>
+</div></nav>
+
+<div class="container">
+
+<!-- 首页 -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <h1>内蒙古高考志愿填报智能推荐</h1>
+    <p>数据实时爬取自内蒙古自治区教育招生考试中心官网（nm.zsks.cn）公开发布的<b>分专业录取最高分/最低分、投档分数线、招生计划、一分一段表</b>，无人工录入、无演示数据。基于滚动多年录取位次，按七档风险等级为每位考生生成完整志愿参考。</p>
+    <div class="tier-legend">
+      <span class="t1">大冲 升31-50%↑</span><span class="t2">冲 升16-30%↑</span><span class="t3">冒险 升6-15%↑</span><span class="t4">适中 ±5%</span><span class="t5">稳妥 降6-25%↓</span><span class="t6">保 降26-50%↓</span><span class="t7">大保 降51-80%↓</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>考生信息</h2>
+    <div class="stu-bar">
+      <div class="form-group" style="flex:1.2 1 180px;min-width:170px">
+        <label>考生姓名（多人可分别建档、互不影响）</label>
+        <input id="stu-name" list="stu-list" maxlength="12" value="测试A" placeholder="输入姓名后点下方按钮建档/切换">
+        <datalist id="stu-list"></datalist>
+      </div>
+      <button class="btn btn-primary" id="stu-switch" style="align-self:flex-end;padding:10px 18px">建档 / 切换</button>
+      <button class="btn btn-outline" id="stu-history-btn" style="align-self:flex-end;padding:10px 16px">考生档案</button>
+      <button class="btn btn-outline" id="stu-del" style="align-self:flex-end;padding:10px 12px" title="删除当前考生档案">删除</button>
+      <span id="stu-cur" class="muted" style="align-self:flex-end;font-size:13px"></span>
+    </div>
+    <div class="form-row" style="margin-top:14px">
+      <div class="form-group" style="flex:0.8 1 100px;min-width:96px">
+        <label>考生届别</label>
+        <select id="in-year"></select>
+      </div>
+      <div class="form-group" style="flex:1.2 1 150px;min-width:140px">
+        <label>科类（首选科目）</label>
+        <div class="seg" id="in-cat">
+          <button data-v="物理类" class="on">物理类</button>
+          <button data-v="历史类">历史类</button>
+        </div>
+      </div>
+      <div class="form-group" style="flex:1 1 130px;min-width:120px;max-width:180px">
+        <label>高考分数</label>
+        <input id="in-score" type="number" min="100" max="750" placeholder="如 501">
+      </div>
+      <div class="form-group" style="flex:1.2 1 160px;min-width:140px;max-width:210px">
+        <label>或 位次（留空自动换算）</label>
+        <input id="in-rank" type="number" min="1" placeholder="如 28233">
+      </div>
+    </div>
+    <div id="home-conv" class="muted" style="margin-bottom:12px"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>计划类别</label>
+        <select id="in-jhlb">
+          <option value="普通类">普通类</option>
+          <option value="含专项">普通类＋国家/地方专项等</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>推荐志愿总数（七档智能分配，选多少给多少）</label>
+        <select id="in-limit"><option value="45">45 个</option><option value="60" selected>60 个</option><option value="100">100 个</option><option value="150">150 个</option><option value="0">全部（不限制）</option></select>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-go">开始生成推荐方案</button>
+    <div id="home-status" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>筛选偏好 <span class="muted" style="font-size:13px;font-weight:400">（横版多选；先选好条件，再生成志愿建议）</span></h2>
+    <p class="muted" style="font-size:13px;margin-bottom:10px">不选=不限。① 地区：大区 → 省份 → 城市（仅列出有招生院校的城市，点"城市"展开细选）；② 办学层次：985/211 等；③ 专业按"门类 → 大类 → 具体专业"三级折叠，勾选上级即全选下辖方向，点"展开"逐级细选（括号方向已合并，如"法学（涉外法治）"并入法学）。同类内为"或"，不同类之间为"且"。</p>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn btn-outline" id="hf-clear" style="padding:6px 14px;font-size:13px">清空筛选</button>
+      <span class="muted" id="hf-count" style="font-size:13px"></span>
+    </div>
+    <div id="hf-box"></div>
+  </div>
+
+  <div class="card">
+    <h3>推荐原理</h3>
+    <p class="sec" style="font-size:14px">以考生位次 R0 与院校专业组/专业历年录取位次 R 的比值 k=R/R0 划分七档；录取位次取各年份"最低分→当年一分一段位次"，多年按 0.5/0.3/0.2 加权（两年 0.6/0.4，一年 1.0），优先最新年份。志愿单位与内蒙古现行规则一致：<b>院校专业组</b>，组内逐专业给出历史分数与档位标签。</p>
+    <p class="muted" style="margin-top:8px">数据更新：每日自动检查并重新爬取官网最新公布数据，也可在「数据中心」手动刷新。</p>
+  </div>
+</div>
+
+<!-- 推荐结果 -->
+<div id="page-results" class="page">
+  <div id="rs-crumb" class="crumb"></div>
+  <div class="card" id="rs-statcard">
+    <div class="sc-title" style="align-items:center">
+      <h2 style="margin:0">七档分布</h2>
+      <span id="rs-total" class="muted" style="flex:1;text-align:left"></span>
+      <select id="f-sort" style="max-width:200px">
+        <option value="k">排序：k 值升序</option>
+        <option value="rank">排序：推荐位次升序</option>
+        <option value="name">排序：院校名称</option>
+      </select>
+      <select id="f-byr" style="max-width:170px;margin-left:8px" title="按保研率筛选院校">
+        <option value="0">保研率：全部</option>
+        <option value="30">保研率 ≥30%</option>
+        <option value="25">保研率 ≥25%</option>
+        <option value="20">保研率 ≥20%</option>
+        <option value="15">保研率 ≥15%</option>
+        <option value="10">保研率 ≥10%</option>
+        <option value="8">保研率 ≥8%</option>
+        <option value="5">保研率 ≥5%</option>
+        <option value="3">保研率 ≥3%</option>
+        <option value="-1">具有保研资格</option>
+      </select>
+    </div>
+    <div class="stat-bar" id="rs-stat"></div>
+    <div class="filters" style="margin:10px 0 0">
+      <input id="f-kw" style="flex:1;min-width:200px" placeholder="快速搜索：院校名称 / 专业关键词">
+    </div>
+    <div id="rs-fsum" class="muted" style="margin-top:8px;font-size:13.5px"></div>
+    <div class="muted" id="rs-filterinfo" style="margin-top:6px"></div>
+  </div>
+  <div id="rs-list"></div>
+  <div class="pager"><button class="btn btn-outline" id="rs-more" style="display:none">加载更多</button></div>
+  <div class="info-note">风险等级均基于往年公开数据推算，仅供志愿填报参考，不构成录取承诺。平行志愿仍有退档风险，请务必阅读院校招生章程并核实体检、单科成绩等特殊要求。</div>
+</div>
+
+<!-- 历年数据 -->
+<div id="page-browse" class="page">
+  <div class="card">
+    <h2>历年录取数据浏览</h2>
+    <div class="form-row">
+      <div class="form-group" style="min-width:120px;flex:0 0 120px"><label>年份</label><select id="br-year"></select></div>
+      <div class="form-group" style="min-width:120px;flex:0 0 120px"><label>科类</label><select id="br-cat"><option>物理类</option><option>历史类</option></select></div>
+      <div class="form-group" style="min-width:200px"><label>搜索院校</label><input id="br-kw" placeholder="如 内蒙古大学"></div>
+      <div class="form-group" style="flex:0 0 auto;align-self:flex-end"><button class="btn btn-primary" id="br-go">查询</button></div>
+    </div>
+    <div id="br-note"></div>
+  </div>
+  <div id="br-list"></div>
+</div>
+
+<!-- 院校详情 -->
+<div id="page-school" class="page">
+  <div id="sd-crumb" class="crumb"></div>
+  <div id="sd-main"></div>
+</div>
+
+<!-- 测评 -->
+<div id="page-test" class="page">
+  <div class="card">
+    <h2>霍兰德兴趣简测（12题）</h2>
+    <p class="muted">快速定位兴趣类型倾向，为专业筛选提供参考。测评结果保存在本机。</p>
+    <div id="test-body"></div>
+  </div>
+</div>
+
+<!-- 数据中心 -->
+<div id="page-data" class="page">
+  <div class="card">
+    <h2>数据中心</h2>
+    <p class="sec" style="font-size:14px">录取数据已随系统内置（data.js），<b>双击 index.html 即可离线使用</b>，首次打开自动载入内置数据，之后不会再自动爬取。如需更新数据：先运行本目录 <b>启动网站.bat</b>，再回到数据中心点"立即刷新全部数据"。</p>
+    <div class="info-note" style="margin:10px 0"><b>说明：</b>浏览器安全限制不允许网页直接读取考试院官网，启动网站.bat 提供数据转发（不保存任何数据）。也可点"导出数据备份(JSON)"随时备份全部本地数据（含考生档案）。</div>
+    <div id="dc-years"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-primary" id="dc-refresh">立即刷新全部数据</button>
+      <button class="btn" id="dc-export">导出数据备份(JSON)</button>
+      <button class="btn btn-danger" id="dc-clear">清空本地缓存</button>
+    </div>
+    <div class="progress-wrap" id="dc-prog" style="display:none">
+      <div class="progress-track"><div class="progress-fill" id="dc-fill" style="width:0%"></div></div>
+      <div class="progress-text" id="dc-text"></div>
+    </div>
+    <div class="log-box" id="dc-log">等待操作…</div>
+  </div>
+  <div class="card">
+    <h3>数据来源（全部为官方公开信息）</h3>
+    <ul style="font-size:14px;color:var(--text-secondary);padding-left:20px">
+      <li>分专业/专业组录取最高分最低分：nm.zsks.cn 各批次轮次公布表（JSON 数据接口）</li>
+      <li>招生计划（专业/学费/学制/办学地点/计划数/章程链接）：官网《招生计划》查阅系统</li>
+      <li>一分一段表（分数↔位次换算依据）：官网《各分数段人数统计表》</li>
+      <li>2015-2024 年（旧高考）官方归档为 JSP 查询与 PDF 统计表，浏览器无法直接解析，历年浏览页提供官方原始链接。</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 关于 -->
+<div id="page-about" class="page">
+  <div class="card">
+    <h2>关于本系统</h2>
+    <p class="sec" style="font-size:14.5px">面向内蒙古考生的志愿填报参考工具。所有推荐均基于官方公开的真实录取数据实时计算生成，页面内没有任何预置或演示数据。</p>
+    <h3>规则口径</h3>
+    <ul style="font-size:14px;color:var(--text-secondary);padding-left:20px">
+      <li>适用 2025 年起内蒙古"3+1+2"新高考：物理类/历史类分开排队，志愿单位为院校专业组，本科批平行志愿。</li>
+      <li>七档分级：k=R/R0（R=专业/专业组多年加权录取位次，R0=考生位次），按位次上调/下调百分比划分——大冲升31-50%、冲升16-30%、冒险升6-15%、适中±5%、稳妥降6-25%、保降26-50%、大保降51-80%（对应阈值 0.70/0.85/0.95/1.05/1.25/1.50）。</li>
+      <li>考生届别可任选：系统自动取该届能获得的最新官方录取年份滚动推算。</li>
+    </ul>
+    <h3>免责声明</h3>
+    <p class="muted">本工具仅供参考，不构成任何录取承诺。所有风险等级均基于往年数据推算，往年分数不代表今年结果。填报前请以官方发布的最新计划、章程为准。</p>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  内蒙古高考志愿填报智能推荐系统 · 数据来源：内蒙古招生考试信息网（nm.zsks.cn）<br>
+  本页面所有推荐结果由公开数据实时计算，仅供参考，不构成录取承诺
+</div>
+
+<!-- 志愿表浮条与弹窗 -->
+<div id="wish-bar" style="display:none"><span><b id="wish-stu" style="font-size:13px"></b> 志愿表 <b id="wish-n">0</b> 个</span><button class="btn btn-primary" id="wish-view" style="padding:8px 16px;font-size:13.5px">查看 / 导出</button></div>
+<div id="wish-mask" style="display:none"></div>
+<div id="wish-modal" style="display:none">
+  <div class="sc-title" style="align-items:center;margin-bottom:8px"><h2 style="margin:0">我的志愿表<span id="wish-title-name" class="muted" style="font-size:14px;font-weight:400;margin-left:8px"></span></h2><button id="wish-close" style="font-size:18px;color:var(--text-muted)">✕</button></div>
+  <div id="wish-body"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+    <button class="btn btn-primary" id="wish-csv">导出 CSV（文件名含考生姓名）</button>
+    <button class="btn btn-outline" id="wish-copy">复制表格</button>
+    <button class="btn btn-danger" id="wish-clear">清空志愿表</button>
+  </div>
+</div>
+<!-- 考生历史记录（可选择历史考生、展开其多个方案） -->
+<div id="hist-mask" style="display:none"></div>
+<div id="hist-modal" style="display:none">
+  <div class="sc-title" style="align-items:center;margin-bottom:8px"><h2 style="margin:0">考生档案与历史方案</h2><button id="hist-close" style="font-size:18px;color:var(--text-muted)">✕</button></div>
+  <p class="muted" style="font-size:13px">点击考生姓名可切换到该考生；展开其下方案可查看/恢复历史推荐结果。各考生数据互相独立。</p>
+  <div id="hist-body"></div>
+</div>
+<!-- 保研率详情弹窗 -->
+<div id="byr-mask" style="display:none"></div>
+<div id="byr-modal" style="display:none">
+  <div class="sc-title" style="align-items:center;margin-bottom:8px"><h2 style="margin:0" id="byr-title">保研率详情</h2><button id="byr-close" style="font-size:18px;color:var(--text-muted)">✕</button></div>
+  <div id="byr-body"></div>
+</div>
+
+<!-- 院校详情：专业组历年趋势弹窗（仅详情页使用） -->
+<div id="sdtr-mask" style="display:none"></div>
+<div id="sdtr-modal" style="display:none">
+  <div class="sc-title" style="align-items:center;margin-bottom:8px">
+    <div><h2 style="margin:0" id="sdtr-title"></h2><span class="muted" id="sdtr-sub"></span></div>
+    <button id="sdtr-close" style="font-size:18px;color:var(--text-muted)">✕</button>
+  </div>
+  <div class="sd-tr-note">看图说明：纵轴是<b>录取最低位次的原始数值</b>（没有做任何缩放）——<b>折线向上 = 位次数值变大 = 录取分变低、竞争缓和</b>；折线向下 = 位次数值变小、竞争变卷。红色虚线 = 你输入的位次所在位置。</div>
+  <div id="sdtr-chart"></div>
+  <div id="sdtr-table"></div>
+</div>
+
+<script src="echarts.min.js"></script>
+<script src="data.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+ * 一、常量与配置
+ * ===================================================================*/
+/* 七档阈值（2026-10 调整：按考生位次上调/下调百分比划分，k=R/R0）
+ * 大冲=位次上调31%-50%（k 0.50-0.69，更悬殊仍归大冲）；冲=上调16%-30%（0.70-0.84）；
+ * 冒险=上调6%-15%（0.85-0.94）；适中=上下浮动5%内（0.95-1.05）；稳妥=下调6%-25%（1.06-1.25）；
+ * 保=下调26%-50%（1.26-1.50）；大保=下调51%-80%（1.51-1.80，更保守仍归大保） */
+const TIERS=[
+ {id:1,name:'大冲',cls:'t1',min:-Infinity,max:0.70,desc:'需位次再升31%-50%才够（k≤0.70），冲名校'},
+ {id:2,name:'冲',cls:'t2',min:0.70,max:0.85,desc:'需位次再升16%-30%（k 0.70-0.85）'},
+ {id:3,name:'冒险',cls:'t3',min:0.85,max:0.95,desc:'需位次再升6%-15%（k 0.85-0.95）；位次相当但近三年波动大也归此档'},
+ {id:4,name:'适中',cls:'t4',min:0.95,max:1.05,desc:'与考生位次上下浮动5%以内（k 0.95-1.05）'},
+ {id:5,name:'稳妥',cls:'t5',min:1.05,max:1.25,desc:'录取位次比考生低6%-25%（k 1.05-1.25）'},
+ {id:6,name:'保',cls:'t6',min:1.25,max:1.50,desc:'录取位次比考生低26%-50%（k 1.25-1.50）'},
+ {id:7,name:'大保',cls:'t7',min:1.50,max:Infinity,desc:'录取位次比考生低51%-80%（k>1.50），保底'}
+];
+const NEW_GK_YEARS=[2026,2025,2024,2023];  // 尝试爬取录取数据的年份（2024/2023为老高考，若官网无数据自动跳过仅存一分一段）
+const SUPP_MIN_YEAR=2024; // 掌上高考补抓仅覆盖 2024 起（2023 暂停补抓：限流严重，优先保 2024）
+const SUPP_SRC='掌上高考 api-gaokao.zjzw.cn'; // 补抓数据来源标记（换源时旧快照作废重抓）
+const RANK_YEARS=[];                       // （已并入 NEW_GK_YEARS）老高考年份的一分一段表由 crawlRank 自动按文/理科抓取
+const ALL_CRAWL_YEARS=[...new Set([...NEW_GK_YEARS,...RANK_YEARS])]; // 全部可爬年份
+const OLD_YEARS=[2022,2021,2020,2019,2018,2017,2016,2015]; // 官网无数据，仅归档链接
+const CTRL_LINES={2025:{'物理类':375,'历史类':418},2026:{'物理类':363,'历史类':403}};
+const ROOT='https://www.nm.zsks.cn';
+const OFFICIAL_LINKS={ // 旧年份官方归档入口（供"历年数据"页展示）
+  2024:'https://www1.nm.zsks.cn/xxcx/gkcx/lqmaxmin24_kal.jsp',
+  2019:'https://www.nm.zsks.cn/fzlm/ptgk/2019gkzdftj/',
+  2018:'https://www.nm.zsks.cn/fzlm/ptgk/2018lqzdftj/',
+  archive:'https://www.nm.zsks.cn/ztzl/pagkpt/xxcx/'
+};
+
+/* =====================================================================
+ * 二、本地存储：localStorage(设置) + IndexedDB(大数据缓存)
+ * ===================================================================*/
+const LS={
+  get(k,d){try{const v=localStorage.getItem('gb_'+k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem('gb_'+k,JSON.stringify(v))}catch(e){}}
+};
+const IDB=(()=>{
+  let dbP=null;
+  function open(){
+    if(dbP)return dbP;
+    dbP=new Promise((res,rej)=>{
+      const rq=indexedDB.open('gaobao_real',1);
+      rq.onupgradeneeded=e=>{const db=e.target.result;
+        if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv');
+      };
+      rq.onsuccess=e=>res(e.target.result);
+      rq.onerror=()=>rej(rq.error);
+    });
+    return dbP;
+  }
+  async function set(k,v){const db=await open();return new Promise((res,rej)=>{
+    const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);
+    tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+  async function get(k){const db=await open();return new Promise((res,rej)=>{
+    const tx=db.transaction('kv','readonly');const rq=tx.objectStore('kv').get(k);
+    rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error);});}
+  async function clear(){const db=await open();return new Promise((res,rej)=>{
+    const tx=db.transaction('kv','readwrite');tx.objectStore('kv').clear();
+    tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+  return {set,get,clear};
+})();
+
+/* =====================================================================
+ * 三、网络层：本地数据服务优先 + CORS 代理链后备
+ * 说明：考试院官网无 CORS 头，浏览器直连必然被拦截。
+ *   源0 = 同目录 server.ps1 提供的本地转发（http://localhost:8090 打开时可用，国内最稳）
+ *   源1-4 = 直连 + 公共 CORS 代理（海外或备用网络时可能可用）
+ * ===================================================================*/
+const Net={
+  log:null,   // 由外部注入日志函数
+  viaLocal:(location.protocol==='http:'||location.protocol==='https:'),
+  localDown:false,
+  sources(){
+    const L=[
+      u=>'/proxy?url='+encodeURIComponent(u),
+      u=>u,
+      u=>'https://api.allorigins.win/raw?url='+encodeURIComponent(u),
+      u=>'https://corsproxy.io/?url='+encodeURIComponent(u),
+      u=>'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u)
+    ];
+    return this.viaLocal?L:L.slice(1);
+  },
+  async fetchOnce(url,pi,timeoutMs){
+    const off=this.viaLocal?0:1;   // 源编号偏移（file:// 时无本地源）
+    const list=this.sources();
+    const build=list[pi-off]||list[0];
+    const ctl=new AbortController();
+    const tm=setTimeout(()=>ctl.abort(),timeoutMs||30000);
+    try{
+      const r=await fetch(build(url),{signal:ctl.signal,redirect:'follow'});
+      clearTimeout(tm);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return await r.text();
+    }catch(e){clearTimeout(tm);if(pi===0){this.localDown=true;}throw e;}
+  },
+  hint(){
+    if(this.viaLocal&&!this.localDown)return'';
+    return'。请双击本系统目录中的「启动网站.bat」启动本地数据服务后再试（浏览器安全限制不允许直接读取官网）';
+  },
+  async text(url,{timeout=30000,tries=null,label=''}={}){
+    const n=this.sources().length;
+    const seq=tries||Array.from({length:n},(_,i)=>i+(this.viaLocal?0:1));
+    let lastErr;
+    for(const pi of seq){
+      try{
+        const t=await this.fetchOnce(url,pi,timeout);
+        if(t&&t.length>0){if(this.log&&pi>(this.viaLocal?0:0))this.log(`  [源${pi}] 成功 ${Math.round(t.length/1024)}KB`);return t;}
+        lastErr=new Error('空响应');
+      }catch(e){lastErr=e;if(this.log)this.log(`  源${pi}失败: ${e.message}`);}
+    }
+    throw new Error(`${label||url} 全部数据源失败: ${lastErr.message}${this.hint()}`);
+  },
+  async json(url,opt){const t=await this.text(url,opt);return JSON.parse(t);},
+  /* POST JSON（仅经本地代理转发；掌上高考网页版接口要求 JSON body） */
+  async postJson(url,body,{timeout=30000,label=''}={}){
+    const ctl=new AbortController();const tm=setTimeout(()=>ctl.abort(),timeout);
+    try{
+      const r=await fetch('/proxy?url='+encodeURIComponent(url),
+        {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctl.signal});
+      clearTimeout(tm);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return JSON.parse(await r.text());
+    }catch(e){clearTimeout(tm);throw new Error((label||url)+' POST失败: '+e.message+this.hint());}
+  }
+};
+
+/* =====================================================================
+ * 四、爬取引擎
+ * ===================================================================*/
+const Crawler={
+  progress:null,  // {set(done,total,text)}
+  log:null,
+
+  /* --- 4.1 一分一段表 --- */
+  async crawlRank(year){
+    this.log&&this.log(`[${year}] 抓取一分一段表索引…`);
+    const yy=String(year).slice(2);
+    const cats=year>=2025?['物理类','历史类']:['文科','理科']; // 2025起新高考，之前为老高考文理分科
+    const idxUrl=`${ROOT}/fzlm/${yy}gktj/`;
+    let found={};
+    // 索引可能多页，逐页找"分数段人数统计表"文章
+    for(let p=0;p<5&&found&&cats.some(c=>!found[c]);p++){
+      const url=p===0?idxUrl:`${idxUrl}index_${p}.html`;
+      let html;try{html=await Net.text(url,{label:'rank-index'});}catch(e){break;}
+      const re=/<a\s+href="([^"]+)"[^>]*>\s*([^<]*分数段人数统计表[^<]*)<\/a>/g;let m;
+      while((m=re.exec(html))){
+        const title=m[2].trim();const href=m[1];
+        for(const cat of cats){
+          // 主表标题形如 "…各分数段人数统计表-物理类"；专项表为 "…专项计划-物理类" 等，用"统计表-物理类"精确后缀排除
+          if(!found[cat]&&title.endsWith('统计表-'+cat))found[cat]=href;
+        }
+      }
+      // 官网分页链接由 JS 生成（静态 HTML 无 index_N 字样），直接尝试下一页，404 即终止
+    }
+    if(cats.some(c=>!found[c]))throw new Error('未找到一分一段文章链接');
+    const out={};
+    for(const cat of cats){
+      const abs=found[cat].startsWith('http')?found[cat]:ROOT+'/fzlm/'+yy+'gktj/'+found[cat].replace(/^\.\//,'').replace(/^\/+/,'');
+      this.log&&this.log(`[${year}] 解析${cat}一分一段…`);
+      const html=await Net.text(abs,{label:'rank-page'});
+      out[cat]=this.parseRankTable(html);
+      if(out[cat].length<50)throw new Error(`${cat}一分一段解析异常(${out[cat].length}行)`);
+    }
+    return out;
+  },
+  parseRankTable(html){
+    const rows=[];
+    const re=/<tr[^>]*>([\s\S]*?)<\/tr>/g;let m;
+    while((m=re.exec(html))){
+      const tds=[...m[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(x=>x[1].replace(/<[^>]+>/g,'').replace(/[（(].*$/, '').trim());
+      if(tds.length>=2){
+        const s=parseFloat(tds[0]),c=parseFloat(tds[tds.length-1]);
+        if(isFinite(s)&&isFinite(c)&&c>0)rows.push({s,c});
+      }
+    }
+    rows.sort((a,b)=>b.s-a.s);
+    return rows;
+  },
+
+  /* --- 4.2 录取分数（分专业 lq.json） --- */
+  async crawlAdmission(year,onFile){
+    this.log&&this.log(`[${year}] 抓取录取分数索引…`);
+    const idxBase=`${ROOT}/kszs/ptgk/xxcx/${String(year).slice(2)}gklqzgzdf/`;
+    const rounds=[];
+    for(let p=0;p<6;p++){
+      const url=p===0?idxBase:`${idxBase}index_${p}.html`;
+      let html;try{html=await Net.text(url,{label:'adm-index'});}catch(e){break;}
+      const re=/<a\s+href="(https?:\/\/www\.nm\.zsks\.cn\/[^"]*\/tj\/lqzgzdf\.html)"[^>]*>\s*([^<]+)<\/a>/g;let m;
+      while((m=re.exec(html))){
+        const href=m[1],title=m[2].trim();
+        if(!/本科批|本科提前批B段/.test(title))continue;
+        if(/艺术|体育|对口/.test(title))continue;
+        rounds.push({href,title});
+      }
+      // 官网分页链接由 JS 生成，直接尝试下一页，404 即终止
+    }
+    // 轮次优先级：本科批第一次 > 提前B第一次 > 本科批第二次 …
+    rounds.sort((a,b)=>{
+      const pr=t=>/本科批第一次/.test(t)?0:/本科提前批B段第一次/.test(t)?1:/本科批第二次/.test(t)?2:/本科批第三次/.test(t)?3:4;
+      return pr(a.title)-pr(b.title);
+    });
+    if(!rounds.length)throw new Error('未找到录取轮次页面');
+    const majors=[],groups=[];
+    const seen=new Set(),seenG=new Set();
+    for(let i=0;i<rounds.length;i++){
+      const rd=rounds[i];
+      const base=rd.href.replace(/\/tj\/lqzgzdf\.html$/,'');
+      onFile&&onFile(i,rounds.length,rd.title);
+      this.log&&this.log(`[${year}] 抓取: ${rd.title}`);
+      let data;
+      try{data=await Net.json(base+'/data/lq.json',{timeout:90000,label:'lq'});}
+      catch(e){this.log&&this.log(`  ✗ 跳过该轮次: ${e.message}`);continue;}
+      for(const r of data){
+        if(r.KLDM!=='A'&&r.KLDM!=='B')continue;               // 仅普通高考历史/物理类
+        const pc=(r.PCMC||'');
+        if(pc.indexOf('本科')!==0)continue;                    // 仅本科层次
+        const klmc=(r.KLMC||'').replace(/（.*?）/g,'');         // 物理类/历史类
+        const key=[r.KLDM,r.JHLBMC,r.JHXZMC,(r.YXDH||'').trim(),(r.ZYZDH||'').trim(),(r.ZYDH||'').trim()].join('|');
+        if(seen.has(key))continue;seen.add(key);
+        const gkey=[r.KLDM,r.JHLBMC,r.JHXZMC,(r.YXDH||'').trim(),(r.ZYZDH||'').trim()].join('|');
+        if(!seenG.has(gkey)){
+          seenG.add(gkey);
+          groups.push({dh:(r.YXDH||'').trim(),yx:r.YXMC,g:(r.ZYZDH||'').trim(),kl:klmc,
+            klmc:r.KLMC,lb:r.JHLBMC,xz:r.JHXZMC,pc:pc,year,
+            max:+r.ZYZZGF||0,min:+r.ZYZZDF||0,n:+r.ZYZLQRS||0,title:rd.title});
+        }
+        majors.push({dh:(r.YXDH||'').trim(),yx:r.YXMC,g:(r.ZYZDH||'').trim(),
+          zd:(r.ZYDH||'').trim(),zm:(r.ZYMC||'').trim(),kl:klmc,klmc:r.KLMC,
+          lb:r.JHLBMC,xz:r.JHXZMC,pc:pc,year,
+          max:+r.ZGF||0,min:+r.ZDF||0,n:+r.LQRS||0});
+      }
+      this.log&&this.log(`  ✓ 累计专业${majors.length}条`);
+    }
+    return {majors,groups};
+  },
+
+  /* --- 4.3 招生计划（分专业详情） --- */
+  async crawlPlan(year){
+    this.log&&this.log(`[${year}] 定位招生计划系统…`);
+    const yy=String(year).slice(2);
+    const zsjhUrl=`${ROOT}/${yy}gkwb/${yy}zsjh/`;
+    let html;try{html=await Net.text(zsjhUrl,{label:'jh-index'});}catch(e){
+      this.log&&this.log(`  计划索引不可达(${e.message})，跳过计划数据`);return {plans:[],schools:[]};
+    }
+    // 找"本科批招生计划"链接
+    let planHref=null;
+    const re=/<a\s+href="([^"]+)"[^>]*>\s*([^<]*本科批招生计划[^<]*)<\/a>/g;let m;
+    while((m=re.exec(html))){if(/本科批招生计划/.test(m[2])&&!/征集|剩余|增补/.test(m[2])){planHref=m[1];break;}}
+    if(!planHref){this.log&&this.log('  未找到本科批计划入口，跳过');return {plans:[],schools:[]};}
+    // href 形如 ./gkjh_26_3_0623/jh/jhkl.html 或绝对路径
+    const abs=planHref.startsWith('http')?planHref:ROOT+'/'+yy+'gkwb/'+yy+'zsjh/'+planHref.replace(/^\.\//,'');
+    const planBase=abs.replace(/\/jh\/[^\/]+$/,'');
+    this.log&&this.log(`[${year}] 抓取分专业招生计划…`);
+    const plans=[],schools=[];
+    try{
+      const jz=await Net.json(planBase+'/data/jhzy.json',{timeout:120000,label:'jhzy'});
+      for(const r of jz){
+        const kd=(r.path||'').charAt(1);
+        if(kd!=='A'&&kd!=='B')continue;
+        plans.push({dh:(r.yxdh||'').trim(),g:(r.jhzyzdm||'').trim(),zd:(r.zydh||'').trim(),
+          zm:(r.zymc||'').trim(),kl:r.klmc,xf:r.xf,nx:r.xznx,dd:r.bxdd||'',plan:+r.syjh||0,
+          wy:r.wyyzmc||'',lb:r.jhlbmc||'',bz:r.bz||'',path:r.path||''});
+      }
+    }catch(e){this.log&&this.log(`  ✗ 计划明细失败: ${e.message}`);}
+    try{
+      const jy=await Net.json(planBase+'/data/jhyx.json',{timeout:120000,label:'jhyx'});
+      for(const r of jy){
+        if(r.kldm!=='A'&&r.kldm!=='B')continue;
+        schools.push({dh:(r.yxdh||'').trim(),yx:r.yxmc,kl:r.klmc,plan:+r.jhs||0,zszc:r.zszc||'',path:r.path||''});
+      }
+    }catch(e){this.log&&this.log(`  ✗ 院校计划索引失败: ${e.message}`);}
+    this.log&&this.log(`  ✓ 专业计划${plans.length}条 / 院校${schools.length}所`);
+    return {plans,schools};
+  },
+
+  /* --- 4.4 年度全量（2023/2024 仅有一分一段表，录取/计划失败自动跳过） --- */
+  async crawlYear(year){
+    const t0=Date.now();
+    const rank=await this.crawlRank(year);
+    this.progress&&this.progress(1,6,'一分一段完成');
+    let adm={majors:[],groups:[]},plan={plans:[],schools:[]};
+    try{
+      adm=await this.crawlAdmission(year,(i,n,t)=>{this.progress&&this.progress(1+i,5+n,t);});
+      this.progress&&this.progress(6,7,'录取分数完成');
+      plan=await this.crawlPlan(year);
+      this.progress&&this.progress(7,7,'招生计划完成');
+    }catch(e){
+      this.log&&this.log(`[${year}] 无录取/计划数据（${e.message}），仅保存一分一段表`);
+    }
+    const payload={year,rank,majors:adm.majors,groups:adm.groups,
+      plans:plan.plans,schools:plan.schools,rankOnly:!adm.groups.length,
+      crawledAt:new Date().toISOString(),elapsed:Date.now()-t0};
+    // 官网无该年录取 JSON（老高考）时，保留此前掌上高考补抓数据与招生计划，避免每日刷新覆盖
+    if(!adm.groups.length){
+      const prev=await IDB.get('year_'+year);
+      if(prev&&prev.suppAt&&prev.groups&&prev.groups.length){
+        payload.majors=prev.majors;payload.groups=prev.groups;
+        payload.suppAt=prev.suppAt;payload.suppSource=prev.suppSource;
+        payload.suppComplete=prev.suppComplete;payload.suppDone=prev.suppDone;
+        payload.suppTotal=prev.suppTotal;payload.suppSchools=prev.suppSchools;
+        payload.suppLeaks=prev.suppLeaks;
+        payload.rankOnly=false;
+      }
+      if(prev&&(!plan.plans.length)&&prev.plans){payload.plans=prev.plans;payload.schools=prev.schools;}
+    }
+    await IDB.set('year_'+year,payload);
+    this.log&&this.log(`[${year}] 完成：专业${payload.majors.length} 组${payload.groups.length} 一分一段${Object.keys(rank).join('/')} 用时${Math.round(payload.elapsed/1000)}s`);
+    return payload;
+  },
+
+  /* --- 4.5 老高考年份（2024/2023）补抓：掌上高考分专业录取分+最低位次 ---
+     官网新系统 JSON 仅有 2025 起数据，旧 JSP 查询已关闭；掌上高考聚合了官方公布的
+     分专业"最低分/最低位次"，按校抓取后合成每校文/理各一个虚拟专业组（g='OLD'），
+     跨年聚合时按校名+专业名与新高考年份对齐。 */
+  _zidCache:null,_zgMap:null,
+  /* 校名→school_id/省份/城市：用 static-data 全量校名映射（免限流，替代已限流的 keyword 搜索接口） */
+  async _zgIdMap(){
+    if(this._zgMap)return this._zgMap;
+    const d=await Net.json('https://static-data.gaokao.cn/www/2.0/school/list.json',{timeout:60000,label:'zg-list'});
+    const m={};const data=(d&&d.data)||{};
+    for(const k in data){const s=data[k];const id=+(s&&(s.school_id||s.id))||0;
+      if(s&&s.name&&id)m[Meta.norm(s.name)]={i:id,p:s.pro||'',c:s.city||''};}
+    this._zgMap=m;return m;
+  },
+  async zjzwSchoolId(name){
+    if(!this._zidCache)this._zidCache=LS.get('zjzwIds',{});
+    if(this._zidCache[name])return this._zidCache[name];
+    const map=await this._zgIdMap(); // 失败会抛错，由上层按失败计（不误判为查无此校）
+    const e=map[Meta.norm(name)]||0;
+    const id=(e&&e.i)||0;
+    if(id){this._zidCache[name]=id;LS.set('zjzwIds',this._zidCache);}
+    return id;
+  },
+  /* 掌上高考网页版新接口（api-gaokao.zjzw.cn，独立限流池，免签名）：
+     1) 静态CDN取该校批次清单 professionalscore.json（键=省_年_科类）
+     2) 按 科类×批次 分片 POST v1/school/special_score（每片独立算 page=1，绕开"翻页需登录"限制）
+     仅保留普通本科主批次（7=本科一批 8=本科二批）；剔除提前批36/专科10/一本B·二本B段37（定向/民族班会拉低门槛分）
+     size上限10，单片 numFound>10 的溢出记录到 leaks（量少，留待老接口恢复后补） */
+  /* 新接口频控码 1010006：IP 级窗口限流（多页面并发会触发）。带退避的 POST： */
+  async _zgPost(body){
+    const waits=[0,6000,15000,30000,60000];
+    for(let a=0;a<waits.length;a++){
+      if(waits[a])await this._zjSleep(waits[a]+Math.random()*1000);
+      let q;try{q=await Net.postJson('https://api-gaokao.zjzw.cn/apidata/web?uri=v1/school/special_score',body,{label:'zg-score'});}
+      catch(e){continue;} // 传输错误：下一档退避后重试
+      if(q&&String(q.code)==='1010006')continue; // 频控：退避后重试
+      return q; // 成功或其他业务码（由上层判）
+    }
+    return null;
+  },
+  async zjgkSpecial(id,year){
+    const dic=await Net.json(`https://static-data.gaokao.cn/www/2.0/school/${id}/dic/professionalscore.json`,{timeout:30000,label:'zg-dic'});
+    const nd=(dic&&dic.data&&dic.data.newsdata)||{};
+    const types=(nd.type&&nd.type[`15_${year}`])||[];
+    const KEEP={7:'本科一批',8:'本科二批'};
+    const rows=[],leaks=[];let errN=0,qN=0;
+    for(const t of types){
+      const kl=t===1?'理科':t===2?'文科':null;
+      if(!kl)continue; // 老高考只要理/文（2025+的2073/2074不会被请求：year由调用方限定）
+      const batches=(nd.batch&&nd.batch[`15_${year}_${t}`])||[];
+      for(const b of batches){
+        if(!KEEP[b])continue;
+        qN++;
+        const body={uri:'v1/school/special_score',school_id:+id,year:+year,
+          local_province_id:15,local_type_id:t,local_batch_id:b,page:1,size:10,platform:2};
+        const q=await this._zgPost(body);
+        await this._zjSleep(400+Math.random()*300); // 片间冷却（1010006 频控存在，保持温和节奏）
+        if(!q||+q.code!==0){errN++;continue;}
+        const items=(q.data&&q.data.item)||[];
+        const nf=+(q.data&&q.data.numFound)||items.length;
+        if(nf>items.length)leaks.push({sid:id,kl,pc:KEEP[b],numFound:nf,got:items.length});
+        for(const r of items)rows.push({...r,_kl:kl,_pc:KEEP[b]});
+      }
+    }
+    if(!rows.length&&errN&&errN>=qN)return null; // 全部请求失败→交给上层判失败（不误记为无数据）
+    return {rows,leaks};
+  },
+  /* 带退避的请求：掌上高考对高频访问返回业务码 1069，需长退避后重试 */
+  _zjSleep(ms){return new Promise(r=>setTimeout(r,ms));},
+  async zjGet(url,tries){
+    const waits=[8000,20000,40000,60000,90000,120000];
+    for(let a=0;a<(tries||waits.length);a++){
+      let q;try{q=await Net.json(url,{timeout:30000,label:'zj'});}catch(e){
+        await this._zjSleep((waits[a]||30000)+Math.random()*1000);continue;
+      }
+      if(q&&String(q.code)==='1069'){await this._zjSleep((waits[a]||30000)+Math.random()*1500);continue;}
+      return q;
+    }
+    return null;
+  },
+  async crawlSupplement(year){
+    this.log&&this.log(`[${year}] 开始从掌上高考补抓老高考分专业数据…`);
+    // 院校名单取最新两个新高考年份在内蒙古实际招生的学校（官方数据为准）
+    const refYears=[2026,2025].filter(y=>Store.years[y]&&Store.years[y].groups.length);
+    const allNames=[];const seenN=new Set();
+    for(const y of refYears)for(const g of Store.years[y].groups){
+      if(seenN.has(g.yx))continue;seenN.add(g.yx);allNames.push(g.yx);
+    }
+    if(!allNames.length){this.log&&this.log(`[${year}] 尚无新高考院校名单，跳过补抓`);return null;}
+    // 断点续抓：仅认新接口来源的快照（旧 api.zjzw.cn 数据可能因限流截断，全部重抓以保证完整）
+    const bySchool=new Map();const done=new Set();
+    const prevAll=await IDB.get('year_'+year);
+    const prev=prevAll&&prevAll.suppSource===SUPP_SRC?prevAll:null;
+    if(prev){
+      if(Array.isArray(prev.suppSchools))prev.suppSchools.forEach(n=>done.add(n));
+      if(prev.majors){
+        for(const mz of prev.majors){
+          if(!bySchool.has(mz.yx))bySchool.set(mz.yx,new Map());
+          bySchool.get(mz.yx).set(mz.kl+'|'+normZm(mz.zm),
+            {zd:mz.zd,zm:mz.zm,kl:mz.kl,pc:mz.pc,min:+mz.min,max:+mz.max||0,rank:mz.rank||null});
+        }
+      }
+    }
+    const names=allNames.filter(n=>!done.has(n));
+    const CONC=1; // 新接口未观测到限流，但仍单并发温和节奏，避免触发未知风控
+    this.log&&this.log(`[${year}] 共${allNames.length}校，已完成${done.size}校，本次补抓${names.length}校（新接口 api-gaokao，按科类×批次分片）`);
+    let okN=0,missN=0,failN=0;const allLeaks=prev&&Array.isArray(prev.suppLeaks)?[...prev.suppLeaks]:[];
+    const save=async complete=>{
+      const majors=[],groups=[];
+      for(const [yx,mm] of bySchool){
+        const recs=[...mm.values()];
+        const kls=[...new Set(recs.map(r=>r.kl))];
+        for(const kl of kls){
+          const rs=recs.filter(r=>r.kl===kl);
+          let gMin=0,gMax=0,gRank=null;
+          for(const r of rs){
+            majors.push({dh:'',yx,g:'OLD',zd:r.zd,zm:r.zm,kl,klmc:kl,lb:'普通类',xz:'非定向',pc:r.pc,year,
+              max:r.max,min:r.min,n:null,rank:r.rank});
+            if(!gMin||r.min<gMin){gMin=r.min;gRank=r.rank;}
+            if(r.max>gMax)gMax=r.max;
+          }
+          groups.push({dh:'',yx,g:'OLD',kl,klmc:kl,lb:'普通类',xz:'非定向',pc:'本科批',year,
+            max:gMax,min:gMin,n:null,rank:gRank,title:'掌上高考补抓'});
+        }
+      }
+      const old=await IDB.get('year_'+year)||{year,rank:{}};
+      const payload={...old,year,majors,groups,
+        rankOnly:groups.length<100&&complete,
+        suppAt:new Date().toISOString(),suppSource:SUPP_SRC,
+        suppTotal:allNames.length,suppDone:done.size,suppSchools:[...done],
+        suppLeaks:allLeaks, // 单片 numFound>10 的溢出漏项（size上限10所致，待老接口恢复后专项补）
+        suppComplete:!!complete};
+      await IDB.set('year_'+year,payload);
+      delete Store.years[year];await Store.loadYear(year);
+      return {groups:groups.length,majors:majors.length};
+    };
+    for(let i=0;i<names.length;i+=CONC){
+      // 启动纪元互斥：页面重载后旧补抓循环自动中止，避免多实例并发刷限流
+      if(LS.get('gb_crawlEpoch')!==this._epoch){
+        this.log&&this.log(`[${year}] 检测到新的页面实例，旧补抓循环中止`);
+        await save(false);return;
+      }
+      const chunk=names.slice(i,i+CONC);
+      await Promise.all(chunk.map(async name=>{
+        try{
+          const id=await this.zjzwSchoolId(name);
+          if(!id){missN++;done.add(name);return;}    // 掌上高考确无此校（分校/更名等）
+          const res=await this.zjgkSpecial(id,year);
+          if(res===null){failN++;return;}            // 全部批次请求失败：不计完成，下次重试
+          allLeaks.push(...res.leaks.map(L=>({yx:name,...L})));
+          const mm=new Map();
+          for(const r of res.rows){
+            if(String(r.zslx_name||'')!=='普通类')continue;
+            const type=r._kl;
+            const min=+r.min;if(!min)continue;
+            const base=String(r.sp_name||'').trim();if(!base)continue;
+            const remark=String(r.remark||'').trim();
+            const spname=remark?base+remark:base; // 如 工科试验班（笃实书院）
+            const key=type+'|'+normZm(spname);
+            const rec={zd:'',zm:spname,kl:type,pc:r._pc,
+              min,max:+r.max||0,rank:+r.min_section||null};
+            const ex=mm.get(key);
+            if(!ex||rec.min<ex.min)mm.set(key,rec);
+          }
+          if(mm.size){bySchool.set(name,mm);okN++;}else missN++;
+          done.add(name); // 无论有无专业数据，只要请求成功就算完成，避免重复抓取
+        }catch(e){failN++;}
+      }));
+      if(i%100===0||i+CONC>=names.length){ // 每100校持久化一次，避免IDB大事务阻塞主线程
+        const s=await save(false);
+        this.log&&this.log(`[${year}] 进度 ${done.size}/${allNames.length} · 本轮有数据${okN} 无数据${missN} 失败${failN} · 累计专业 ${s.majors} 组 ${s.groups} 漏项${allLeaks.length}`);
+        this.progress&&this.progress(7,7,`掌上高考补抓 ${done.size}/${allNames.length} 校`);
+      }
+      await this._zjSleep(1200+Math.random()*600); // 校际 1.2-1.8 秒（新接口有 1010006 频控，温和节奏优先）
+    }
+    // 全部学校都失败时不算完成（下次自动断点续抓）；其余情况收尾标记完成
+    const complete=failN<names.length;
+    const finalS=await save(complete);
+    this.log&&this.log(`[${year}] 补抓${complete?'完成':'暂停（稍后自动续抓）'}：完成校 ${done.size}/${allNames.length} · 本轮有数据${okN} 无数据${missN} 失败${failN} · 专业 ${finalS.majors} · 组 ${finalS.groups} · 漏项${allLeaks.length}`);
+    return finalS;
+  }
+};
+
+/* =====================================================================
+ * 五、数据仓库（内存索引 + 惰性加载）
+ * ===================================================================*/
+const Store={
+  years:{},                 // year -> payload
+  planMap:{},               // year -> Map(dh|g|zd -> plan)
+  schoolMap:{},             // year -> Map(dh|kl -> school)
+  rankIdx:{},               // year -> {cat: Map(score->rank)}
+  status:{},                // year -> {ok, err, date}
+
+  async loadYear(year){
+    if(this.years[year])return this.years[year];
+    let p=null;
+    try{p=await IDB.get('year_'+year);}catch(e){}
+    if(!p&&window.__GB_BUILTIN__)p=(window.__GB_BUILTIN__.years||{})[year]||null; // IDB不可用（如双击file://打开时浏览器禁用IndexedDB）则直接用内置数据
+    if(p){this.years[year]=p;this.buildIndex(p);}
+    return p||null;
+  },
+  buildIndex(p){
+    const pm=new Map();
+    for(const it of p.plans||[])pm.set(it.dh+'|'+it.g+'|'+it.zd,it);
+    this.planMap[p.year]=pm;
+    const sm=new Map();
+    for(const s of p.schools||[])sm.set(s.dh+'|'+s.kl,s);
+    this.schoolMap[p.year]=sm;
+    const ri={};
+    for(const cat in p.rank||{}){
+      const m=new Map();
+      for(const row of p.rank[cat])m.set(row.s,row.c);
+      ri[cat]=m;
+    }
+    this.rankIdx[p.year]=ri;
+  },
+  rankOfScore(year,cat,score){
+    const ri=this.rankIdx[year];if(!ri)return null;
+    const m=ri[cat];if(!m)return null;
+    if(m.has(score))return m.get(score);
+    // 线性插值：找相邻两分数
+    let lo=null,hi=null;
+    for(const [s,c] of m){ // Map 无序，需比较
+      if(s<=score&&(lo===null||s>lo))lo=s;
+      if(s>=score&&(hi===null||s<hi))hi=s;
+    }
+    if(lo!==null&&hi!==null&&hi!==lo){
+      const clo=m.get(lo),chi=m.get(hi);
+      return Math.round(clo+(score-lo)/(hi-lo)*(chi-clo));
+    }
+    if(lo!==null){ // 低于表底：外推（每分约40人）
+      const clo=m.get(lo);
+      return Math.max(1, Math.round(clo+(lo-score)*40)); // 钳制最小为1，防止负位次
+    }
+    if(hi!==null)return m.get(hi);
+    return null;
+  },
+  planOf(year,dh,g,zd){const m=this.planMap[year];return m?m.get(dh+'|'+g+'|'+zd):null;},
+  planByName(year,dh,g,zm){const p=this.years[year];if(!p||!p.plans)return null;const n=String(zm||'').replace(/\s+/g,'').replace(/[（(【\[].*$/,'').trim();for(const pl of p.plans){if(pl.dh===dh&&pl.g===g){const pn=String(pl.zm||'').replace(/\s+/g,'').replace(/[（(【\[].*$/,'').trim();if(pn===n)return pl;}}return null;},
+  schoolOf(year,dh,kl){const m=this.schoolMap[year];return m?m.get(dh+'|'+kl):null;},
+  yearsAvailable(){return NEW_GK_YEARS.filter(y=>this.years[y]);},
+  /* 位次反查分数（一分一段插值），用于跨年等位次换算 */
+  scoreOfRank(year,cat,rank){
+    const ri=this.rankIdx[year];if(!ri)return null;
+    const rows=ri[cat];if(!rows||!rows.size)return null;
+    const arr=[...rows.entries()].sort((a,b)=>b[0]-a[0]); // 分数降序，累计人数升序
+    if(rank<=arr[0][1])return arr[0][0];
+    for(let i=1;i<arr.length;i++){
+      if(arr[i][1]>=rank){
+        const s1=arr[i-1][0],c1=arr[i-1][1],s2=arr[i][0],c2=arr[i][1];
+        const t=(rank-c1)/(c2-c1||1);
+        return Math.round(s1+(s2-s1)*t);
+      }
+    }
+    return arr[arr.length-1][0];
+  }
+};
+
+/* =====================================================================
+ * 六、推荐算法
+ * ===================================================================*/
+const Algo={
+  /* 参考年份=考生届别"之前"已录取结束的年份（2026届看2025/2024/2023，2027届看2026/2025/2024），降序取前3 */
+  candidateYears(examYear){
+    return NEW_GK_YEARS.filter(y=>y<examYear&&Store.years[y]&&Store.years[y]&&Store.years[y].groups&&Store.years[y].groups.length).sort((a,b)=>b-a).slice(0,3);
+  },
+  weights(n){return n>=3?[0.5,0.3,0.2]:n===2?[0.6,0.4]:[1];},
+  /* 一组 {year,min,rank?} 的加权位次：优先用数据自带位次（掌上高考 min_section），否则按当年一分一段换算 */
+  compositeRank(points){
+    const pts=points.filter(p=>p&&((p.rank>0)||(p.min>0&&Store.rankIdx[p.year])));
+    if(!pts.length)return null;
+    const ws=this.weights(pts.length);let sum=0,wsum=0;
+    pts.forEach((p,i)=>{
+      let r=p.rank>0?p.rank:Store.rankOfScore(p.year,p.cat,p.min);
+      if(r){sum+=r*ws[i];wsum+=ws[i];}
+    });
+    return wsum?Math.round(sum/wsum):null;
+  },
+  tierOf(k, cv){
+    cv = cv || 0;
+    // 核心规则：k≈1（位次相当，±5%内）但近三年波动大（cv≥0.08，有捡漏风险）→ 降为"冒险"而非"适中"
+    // 避免"捡漏"院校被误判为合适：某年位次突然大幅跳变说明大小年风险，不应视为稳妥
+    if(k > 0.95 && k <= 1.05 && cv >= 0.08) return TIERS[2]; // 冒险
+    for(const t of TIERS)if(k>t.min&&k<=t.max)return t;
+    return TIERS[6];
+  },
+  /* 专业组聚合推荐（组为志愿单位） */
+  buildRecommendation(opt){
+    const {examYear,cat,rank0,jhlbMode}=opt;
+    const years=this.candidateYears(examYear);
+    if(!years.length)return {years:[],items:[]};
+    const onlyNorm=jhlbMode==='普通类';
+    /* 每年按"科类+普通类"收集候选组及其专业（老高考补抓数据为每校正文/理各一个虚拟组 g='OLD'） */
+    const groupsByYear={};
+    for(const y of years){
+      const p=Store.years[y];if(!p)continue;
+      const yc=catOf(y,cat);
+      const arr=[];
+      for(const g of p.groups){
+        if(g.kl!==yc)continue;
+        if(onlyNorm&&g.lb!=='普通类'&&!String(g.lb).includes('普通'))continue;
+        // 组唯一标识：新高考用 院校代号+组代号+批次+性质；老高考补抓数据用 校名（dh为空）
+        const cid=(g.dh?g.dh+'|'+g.g+'|'+g.lb+'|'+g.xz:'OLD|'+g.yx+'|'+yc);
+        arr.push({year:y,yx:g.yx,dh:g.dh,g:g.g,lb:g.lb,xz:g.xz,kl:yc,cid,
+          min:g.min,max:g.max,n:g.n,rank:g.rank||null,mset:new Map()});
+      }
+      const cmap=new Map(arr.map(c=>[c.cid,c]));
+      for(const mz of p.majors){
+        if(mz.kl!==yc)continue;
+        if(onlyNorm&&mz.lb!=='普通类'&&!String(mz.lb).includes('普通'))continue;
+        const cid=(mz.dh?mz.dh+'|'+mz.g+'|'+mz.lb+'|'+mz.xz:'OLD|'+mz.yx+'|'+yc);
+        const c=cmap.get(cid);if(!c)continue;
+        const z=normZm(mz.zm);if(!z)continue;
+        // 同一年同一专业名在多批次出现时保留最低分（最易录取口径，偏保守参考）
+        const rec={year:y,zd:mz.zd,zm:mz.zm,z,min:+mz.min||0,max:+mz.max||0,n:mz.n||null,rank:mz.rank||null,cat:yc};
+        const ex=c.mset.get(z);
+        if(!ex||rec.min>0&&rec.min<ex.min)c.mset.set(z,rec);
+      }
+      groupsByYear[y]=arr;
+    }
+    /* 跨年对齐：从最新年向旧年遍历。代号相同时精确配对；代号变化时按"同校+专业名集合重叠最大"配对 */
+    const items=[];
+    const normNm=s=>String(s||'').replace(/\s+/g,'').replace(/[（(【\[].*$/,'').trim();
+    for(const y of years){
+      const cands=groupsByYear[y]||[];
+      const used=new Set();
+      for(const it of items){
+        let best=null,bestScore=0;
+        for(const c of cands){
+          if(used.has(c.cid))continue;
+          if(normNm(c.yx)!==normNm(it.yx))continue;
+          let score=0;
+          if(c.dh&&c.dh===it.dh&&c.g===it.g&&c.lb===it.lb&&c.xz===it.xz)score=1e9;
+          else{for(const z of c.mset.keys())if(it.majors.has(z))score++;}
+          if(score>bestScore){bestScore=score;best=c;}
+        }
+        // 精确匹配直接通过；模糊匹配至少1个同名专业，防止不相干的组硬配
+        if(best&&(bestScore>=1e9||bestScore>=1)){used.add(best.cid);this._attachYear(it,best,y);}
+      }
+      // 未配上年的候选 → 新建项目（仅在某年出现的组）
+      for(const c of cands){
+        if(used.has(c.cid))continue;
+        const it={dh:c.dh,yx:c.yx,g:c.g,lb:c.lb,xz:c.xz,kl:c.kl,pts:[],majors:new Map()};
+        this._attachYear(it,c,y);
+        items.push(it);
+      }
+    }
+    /* 汇总：加权位次、波动、档位 */
+    const out=[];
+    for(const grp of items){
+      grp.pts.sort((a,b)=>b.year-a.year);
+      const gRank=this.compositeRank(grp.pts);
+      if(!gRank)continue;
+      const k=gRank/rank0;
+      const mins=grp.pts.map(p=>p.min).filter(v=>v>0);
+      const mean=mins.length?mins.reduce((a,b)=>a+b,0)/mins.length:0;
+      const cv=mins.length>1?Math.sqrt(mins.reduce((a,b)=>a+(b-mean)**2,0)/mins.length)/(mean||1):0;
+      const tier=this.tierOf(k,cv);
+      const majors=[];
+      for(const mz of grp.majors.values()){
+        mz.pts.sort((a,b)=>b.year-a.year);
+        const mRank=this.compositeRank(mz.pts);
+        const mk=mRank?mRank/rank0:null;
+        const mmins=mz.pts.map(p=>p.min).filter(v=>v>0);
+        const mmean=mmins.length?mmins.reduce((a,b)=>a+b,0)/mmins.length:0;
+        const mcv=mmins.length>1?Math.sqrt(mmins.reduce((a,b)=>a+(b-mmean)**2,0)/mmins.length)/(mmean||1):0;
+        majors.push({zd:mz.zd,zm:mz.zm,rank:mRank,k:mk,tier:mk?this.tierOf(mk,mcv):null,
+          byYear:mz.pts.map(p=>({year:p.year,min:p.min,max:p.max,n:p.n,
+            rank:p.rank>0?p.rank:Store.rankOfScore(p.year,p.cat,p.min)}))});
+      }
+      majors.sort((a,b)=>(a.rank||9e9)-(b.rank||9e9));
+      out.push({dh:grp.dh,yx:grp.yx,g:grp.g,lb:grp.lb,xz:grp.xz,kl:grp.kl,
+        gRank,k,tier,cv,majors,
+        byYear:grp.pts.map(p=>({year:p.year,min:p.min,max:p.max,n:p.n,
+          rank:p.rank>0?p.rank:Store.rankOfScore(p.year,p.cat,p.min)}))});
+    }
+    return {years,items:out};
+  },
+  /* 把某一年的候选组挂到跨年级项目上（组数据 + 专业按归一化名对齐） */
+  _attachYear(it,c,y){
+    it.pts.push({year:y,min:c.min,max:c.max,n:c.n,rank:c.rank,cat:c.kl});
+    const latestYear=it.pts.reduce((mx,p)=>Math.max(mx,p.year),0);
+    if(c.dh&&!it.dh)it.dh=c.dh; // 项目身份字段以最新年代号为准；旧年补抓数据无代号不覆盖
+    for(const rec of c.mset.values()){
+      let m=it.majors.get(rec.z);
+      if(!m){m={zd:rec.zd,zm:rec.zm,pts:[]};it.majors.set(rec.z,m);}
+      if(y>=latestYear){m.zd=rec.zd;m.zm=rec.zm;} // 最新年代码/名称用于展示
+      m.pts.push(rec);
+    }
+  }
+};
+
+/* =====================================================================
+ * 七、UI 公共
+ * ===================================================================*/
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmtN(n){return n==null||!isFinite(n)?'—':Number(n).toLocaleString('en-US');}
+function tierBadge(t,extra){return t?`<span class="badge ${t.cls}">${t.name}${extra||''}</span>`:'';}
+function toast(msg){const d=document.createElement('div');d.textContent=msg;d.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#3A3A3A;color:#fff;padding:9px 18px;border-radius:99px;font-size:14px;z-index:999';document.body.appendChild(d);setTimeout(()=>d.remove(),2600);}
+function dcLog(msg){const box=$('#dc-log');box.textContent+=`\n${msg}`;box.scrollTop=box.scrollHeight;console.log(msg);}
+Net.log=m=>dcLog('  '+m);
+Crawler.log=m=>dcLog(m);
+
+/* =====================================================================
+ * 八、页面逻辑
+ * ===================================================================*/
+/* ---- 多考生档案：志愿表/输入/筛选/历史按考生独立存储，互不影响 ---- */
+const EMPTY_FILTER=()=>({prov:[],city:[],major:[],level:[]});
+/* 兼容旧档案：缺 city 的历史 idxFilter 补空数组（type 字段已废弃，读取时忽略） */
+const normIF=f=>{const e=f||{};return {prov:e.prov||[],city:e.city||[],major:e.major||[],level:e.level||[]};};
+const Stu={
+  reg:LS.get('students',[]),
+  curId:LS.get('stuCur',null),
+  data:null,
+  ensure(){
+    if(!this.curId||!this.reg.some(s=>s.id===this.curId))this.curId=this.reg.length?this.reg[0].id:null;
+    this.data=this.curId
+      ?Object.assign({name:'',wish:[],lastInput:null,idxFilter:EMPTY_FILTER(),history:[]},LS.get('stuData:'+this.curId,{}))
+      :null;
+    // 兜底：档案数据里姓名为空时从注册表补齐（防旧档案/新建档案缺 name 导致导出文件名空缺）
+    if(this.data&&!this.data.name){const m=this.reg.find(x=>x.id===this.curId);if(m&&m.name)this.data.name=m.name;}
+    return this.data;
+  },
+  save(){if(this.curId&&this.data)LS.set('stuData:'+this.curId,this.data);},
+  createOrSwitch(rawName){
+    const name=String(rawName||'').trim();
+    let s=this.reg.find(x=>x.name===name),isNew=false;
+    if(!s){s={id:'s'+Date.now()+Math.floor(Math.random()*999),name,createdAt:new Date().toISOString()};
+      this.reg.push(s);LS.set('students',this.reg);isNew=true;}
+    this.curId=s.id;LS.set('stuCur',s.id);this.ensure();
+    // 姓名落库：确保档案数据对象里始终保存当前考生姓名（导出文件名/CSV内容依赖它）
+    if(this.data&&this.data.name!==name){this.data.name=name;this.save();}
+    return {s,isNew};
+  },
+  remove(id){
+    this.reg=this.reg.filter(s=>s.id!==id);
+    LS.set('students',this.reg);
+    try{localStorage.removeItem('stuData:'+id);}catch(e){}
+    if(this.curId===id){this.curId=this.reg.length?this.reg[0].id:null;LS.set('stuCur',this.curId);this.ensure();}
+  }
+};
+const State={
+  cat:'物理类', result:null, filterTier:0, shown:0,
+  plan:[], poolAll:[], poolN:0, foldN:0, counts:[], wish:[],
+  idxFilter:EMPTY_FILTER(),
+  input:{examYear:2027,score:null,rank:null,jhlb:'普通类',limit:60}
+};
+
+/* ---- 8.1 首页 ---- */
+function initHome(){
+  const ys=[];for(let y=2028;y>=2024;y--)ys.push(y);
+  $('#in-year').innerHTML=ys.map(y=>`<option value="${y}" ${y===2027?'selected':''}>${y}</option>`).join('');
+  CITY.load(); // 后台拉取全量校单（省份/城市），完成后自动重绘地区列
+  $$('#in-cat button').forEach(b=>b.onclick=()=>{
+    $$('#in-cat button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    State.cat=b.dataset.v;homePreview();
+  });
+  $('#in-year').onchange=homePreview;
+  $('#in-score').oninput=()=>{if($('#in-score').value)$('#in-rank').value='';homePreview();};
+  $('#in-rank').oninput=()=>{if($('#in-rank').value)$('#in-score').value='';homePreview();};
+  $('#btn-go').onclick=startRecommend;
+  // 考生档案
+  $('#stu-switch').onclick=()=>switchStudent($('#stu-name').value);
+  $('#stu-name').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();switchStudent($('#stu-name').value);}};
+  $('#stu-history-btn').onclick=openHist;
+  $('#stu-del').onclick=()=>{
+    const d=Stu.ensure();if(!d){toast('当前没有考生档案');return;}
+    if(!confirm(`确定删除考生「${d.name}」的全部档案？\n（含志愿表、筛选偏好和历史记录，删除后不可恢复）`))return;
+    Stu.remove(Stu.curId);applyStuToUI();toast('档案已删除');
+  };
+  buildHomeFilter();
+  $('#hf-clear').onclick=()=>{
+    State.idxFilter=EMPTY_FILTER();
+    if(Stu.data){Stu.data.idxFilter=State.idxFilter;Stu.save();}
+    $$('#hf-box input[type="checkbox"]').forEach(c=>{c.checked=false;c.indeterminate=false;});
+    updateHfCnt();
+  };
+  // 展开/收起：省份下城市、门类下大类、大类下专业（按钮，不触发勾选）
+  $('#hf-box').addEventListener('click',e=>{
+    const rb=e.target.closest('.p-exp');
+    if(rb){
+      const blk=rb.closest('.prov-blk');
+      const open=blk.classList.toggle('open');
+      window._hfOpenProvs||(window._hfOpenProvs=new Set());
+      open?window._hfOpenProvs.add(rb.dataset.key):window._hfOpenProvs.delete(rb.dataset.key);
+      rb.textContent=open?'收起 ▴':'城市 ▾';
+      return;
+    }
+    const gb=e.target.closest('.g-exp');
+    if(gb){
+      const blk=gb.closest('.gcat');
+      const name=blk.querySelector('.g-p').value.slice(2);
+      const open=blk.classList.toggle('open');
+      window._hfOpenGates||(window._hfOpenGates=new Set());
+      open?window._hfOpenGates.add(name):window._hfOpenGates.delete(name);
+      gb.textContent=open?'收起大类 ▴':'展开大类 ▾';
+      return;
+    }
+    const b=e.target.closest('.mcat-exp');if(!b)return;
+    const blk=b.closest('.mcat');const name=blk.querySelector('.mcat-p').value.slice(2);
+    const open=blk.classList.toggle('open');
+    window._hfOpenCats||(window._hfOpenCats=new Set());
+    open?window._hfOpenCats.add(name):window._hfOpenCats.delete(name);
+    b.textContent=open?'收起 ▴':'展开 ▾';
+  });
+  $('#hf-box').addEventListener('change',e=>{
+    const t=e.target;
+    if(!t||t.type!=='checkbox')return;
+    // 递归级联父子：勾选父级→全选子级；取消父级→清空子级（子级不再残留"派生勾选"导致取消无效）
+    const cascade=inp=>{
+      let kids=[];
+      if(inp.classList.contains('fs-all')){ // 大区全选 → 下辖省份
+        $$('#hf-box input[data-f="prov"][data-rg="'+inp.dataset.region+'"]').forEach(c=>kids.push(c));
+      }else if(inp.dataset&&inp.dataset.f==='prov'){ // 省 → 下辖城市
+        inp.closest('.prov-blk').querySelectorAll('input[data-f="city"]').forEach(c=>kids.push(c));
+      }else if(inp.classList&&inp.classList.contains('g-p')){ // 门类 → 全部大类+专业
+        inp.closest('.gcat').querySelectorAll('input[data-f="major"]').forEach(c=>{if(c!==inp)kids.push(c);});
+      }else if(inp.classList&&inp.classList.contains('mcat-p')){ // 大类 → 其下专业
+        inp.closest('.mcat').querySelectorAll('.mcat-s').forEach(c=>kids.push(c));
+      }
+      kids.forEach(c=>{c.checked=inp.checked;cascade(c);});
+    };
+    cascade(t);
+    readHomeFilter();syncFilterUI(); // 就地同步派生视觉，不重建 DOM（保留列内滚动位置，避免点击丢失）
+  });
+}
+/* 专业名归一：去掉括号后的方向/师范等后缀，合并同类项（如"法学(涉外法治)"并入"法学"） */
+function normZm(z){return String(z||'').replace(/[（(].*$/,'').trim();}
+/* ---- 首页筛选偏好（横版三列：①地区(大区→省→市) ②办学层次 ③专业方向） ---- */
+function readHomeFilter(){
+  const IF=EMPTY_FILTER();
+  // 列①地区：省勾选且（无城市列表或城市全勾）→ 记省 1 项；否则按勾选的城市记录
+  $$('#hf-box .prov-blk').forEach(blk=>{
+    const pc=blk.querySelector('input[data-f="prov"]');if(!pc)return;
+    const cs=[...blk.querySelectorAll('input[data-f="city"]')];
+    if(pc.checked&&(!cs.length||cs.every(c=>c.checked)))IF.prov.push(pc.value);
+    else cs.forEach(c=>{if(c.checked)IF.city.push(c.value);});
+  });
+  // 列②办学层次
+  $$('#hf-box input[data-f="level"]:checked').forEach(c=>IF.level.push(c.value));
+  // 列③专业：门类/大类勾选且子级全勾 → 记门类/大类（1项）；否则记勾选的具体专业
+  $$('#hf-box .gcat').forEach(gc=>{
+    const gp=gc.querySelector('.g-p');if(!gp)return;
+    const mcs=[...gc.querySelectorAll('.mcat')];
+    const full=box=>{ // 节点勾选且其全部叶子勾选
+      const ss=[...box.querySelectorAll('.mcat-s')];
+      const self=box.classList.contains('mcat')?box.querySelector('.mcat-p'):gp;
+      return self&&self.checked&&(!ss.length||ss.every(s=>s.checked));
+    };
+    if(mcs.length&&mcs.every(full)){IF.major.push(gp.value);return;} // 整门类全满
+    mcs.forEach(mc=>{
+      const mp=mc.querySelector('.mcat-p');if(!mp)return;
+      const ss=[...mc.querySelectorAll('.mcat-s')];
+      if(mp.checked&&(!ss.length||ss.every(s=>s.checked))){IF.major.push(mp.value);return;} // 整大类全满
+      ss.forEach(s=>{if(s.checked)IF.major.push(s.value);});
+    });
+  });
+  State.idxFilter=IF;
+  if(Stu.data){Stu.data.idxFilter=IF;Stu.save();}
+  updateHfCnt();
+}
+function updateHfCnt(){
+  const IF=normIF(State.idxFilter);
+  const n=IF.prov.length+IF.city.length+IF.major.length+IF.level.length;
+  const el=$('#hf-count');if(el)el.textContent=n?`已选 ${n} 项条件（大类按1项计）`:'未选任何条件（= 不限）';
+}
+/* 筛选变更后就地同步派生勾选视觉（不重建 DOM：保留列内滚动位置，避免浏览器重放点击） */
+function syncFilterUI(){
+  const IF=normIF(State.idxFilter);
+  // 列①：省 checked = 省选中 或 城市全选；城市 checked = 省选中 或 自身选中；部分选中→半选
+  $$('#hf-box .prov-blk').forEach(blk=>{
+    const pc=blk.querySelector('input[data-f="prov"]');if(!pc)return;
+    const cs=[...blk.querySelectorAll('input[data-f="city"]')];
+    const provOn=IF.prov.includes(pc.value);
+    let anyC=false;
+    cs.forEach(c=>{const on=provOn||IF.city.includes(c.value);c.checked=on;if(on)anyC=true;});
+    pc.checked=provOn||(!!cs.length&&cs.every(c=>IF.city.includes(c.value)));
+    pc.indeterminate=!pc.checked&&anyC;
+  });
+  $$('#hf-box input.fs-all').forEach(a=>{
+    const ps=REGIONS[a.dataset.region]||[];
+    a.checked=!!ps.length&&ps.every(p=>IF.prov.includes(p));
+  });
+  // 列③：门类 checked=g:；大类 checked=门类 或 m:；专业 checked=任一上级 或 s:；部分选中→半选
+  $$('#hf-box .gcat').forEach(gc=>{
+    const gp=gc.querySelector('.g-p');if(!gp)return;
+    const g=IF.major.includes(gp.value);
+    let anySub=false;
+    gc.querySelectorAll('.mcat').forEach(mc=>{
+      const mp=mc.querySelector('.mcat-p');if(!mp)return;
+      const on=g||IF.major.includes(mp.value);
+      mp.checked=on;
+      let anyS=false;
+      mc.querySelectorAll('.mcat-s').forEach(s=>{const c=on||IF.major.includes(s.value);s.checked=c;if(c)anyS=true;});
+      mp.indeterminate=!on&&anyS;
+      if(on||anyS)anySub=true;
+    });
+    gp.indeterminate=!g&&anySub;
+  });
+}
+function buildHomeFilter(){
+  const box=$('#hf-box');if(!box)return;
+  const IF=normIF(State.idxFilter);
+  const ck=(f,v)=>IF[f]&&IF[f].includes(v)?' checked':'';
+  // 列①：院校地区（大区→省份→城市，城市来自全量校单，仅列有招生院校的城市）
+  const cityIdx={};const yxSeen=new Set();
+  for(const y in Store.years){const p=Store.years[y];if(!p||!p.majors)continue;
+    for(const mzRaw of p.majors){const yx=mzRaw.yx;if(!yx||yxSeen.has(yx))continue;yxSeen.add(yx);
+      const si=schoolInfo(yx);const c=si.city;
+      if(si.prov&&si.prov!=='其他'&&c){const m=cityIdx[si.prov]||(cityIdx[si.prov]={});m[c]=(m[c]||0)+1;}}}
+  const openProvs=window._hfOpenProvs||(window._hfOpenProvs=new Set());
+  let h='<div class="hf-grid"><div class="hf-col"><h4>① 院校地区</h4><div class="hf-regions">';
+  for(const rg of Object.keys(REGIONS)){
+    if(rg==='其他')continue;
+    const ps=REGIONS[rg];
+    h+=`<div style="margin-bottom:6px"><label style="display:flex;gap:6px;align-items:center;cursor:pointer;font-weight:600;font-size:13px"><input type="checkbox" class="fs-all" data-region="${esc(rg)}"${ps.every(p=>IF.prov.includes(p))&&ps.length?' checked':''}> ${esc(rg)}</label><div style="margin:2px 0 0 18px;display:flex;flex-direction:column">`;
+    for(const p of ps){
+      const cs=Object.keys(cityIdx[p]||{}).sort().map(c=>[c,cityIdx[p][c]]);
+      const provSel=IF.prov.includes(p);
+      const allCitySel=!!cs.length&&cs.every(([c])=>IF.city.includes(p+'|'+c));
+      h+=`<div class="prov-blk${openProvs.has(p)?' open':''}"><div class="prov-row"><label><input type="checkbox" data-f="prov" data-rg="${esc(rg)}" value="${esc(p)}"${provSel||allCitySel?' checked':''}> ${esc(p)}</label>${cs.length?`<button type="button" class="p-exp" data-key="${esc(p)}">${openProvs.has(p)?'收起 ▴':'城市 ▾'}</button>`:''}</div>`;
+      if(cs.length){
+        h+='<div class="mcat-subs">';
+        for(const [c,n] of cs)h+=`<label><input type="checkbox" data-f="city" value="${esc(p+'|'+c)}"${provSel||IF.city.includes(p+'|'+c)?' checked':''}> ${esc(c)} <span class="muted">(${n}校)</span></label>`;
+        h+='</div>';
+      }
+      h+='</div>';
+    }
+    h+='</div></div>';
+  }
+  h+='</div></div>';
+  // 列②：办学层次
+  const LVS=[['985','985 工程（39所顶尖名校）'],['211','211 工程（含985外的重点校）'],['双一流','双一流建设高校'],['保研','具有保研资格（含985/211/双一流及补充名单）'],['普通本科','普通公办/民办本科']];
+  h+='<div class="hf-col"><h4>② 办学层次</h4><div class="hf-lv">';
+  for(const [v,lab] of LVS)h+=`<label><input type="checkbox" data-f="level" value="${v}"${ck('level',v)}> <span><b>${v}</b> <span class="muted" style="font-weight:400">${lab.replace(v,'')}</span></span></label>`;
+  h+='</div></div>';
+  // 列③：专业 门类（一级）→ 大类（二级）→ 专业（三级，默认折叠）
+  const catMap=new Map();
+  for(const y in Store.years){const p=Store.years[y];if(!p||!p.majors)continue;
+    for(const mzRaw of p.majors){const z=normZm(mzRaw.zm);if(!z)continue;const c=majorCat(z);
+      if(!catMap.has(c))catMap.set(c,new Set());catMap.get(c).add(z);}}
+  h+='<div class="hf-col"><h4>③ 专业方向（门类 → 大类 → 专业）</h4>';
+  if(!catMap.size)h+='<p class="muted" style="font-size:12px;margin:0 0 6px">具体专业在数据爬取完成后自动出现；现在可先按门类/大类筛选。</p>';
+  const openGates=window._hfOpenGates||(window._hfOpenGates=new Set());
+  const openCats=window._hfOpenCats||(window._hfOpenCats=new Set());
+  for(const [gate,cats] of MAJOR_GATES){
+    const have=cats.filter(c=>catMap.has(c));
+    if(!have.length)continue;
+    const gateN=have.reduce((a,c)=>a+catMap.get(c).size,0);
+    const gOn=IF.major.includes('g:'+gate);
+    const catPOn=c=>gOn||IF.major.includes('m:'+c);
+    const sOn=(z,c)=>gOn||catPOn(c)||IF.major.includes('s:'+z);
+    h+=`<div class="gcat${openGates.has(gate)?' open':''}"><div class="gcat-row"><label><input type="checkbox" class="g-p" data-f="major" value="g:${esc(gate)}"${gOn?' checked':''}> <b>${esc(gate)}</b> <span class="muted" style="font-weight:400">${have.length}类 · ${gateN}个专业</span></label>`;
+    h+=`<button type="button" class="g-exp">${openGates.has(gate)?'收起大类 ▴':'展开大类 ▾'}</button></div>`;
+    h+='<div class="g-subs">';
+    for(const c of have){
+      const subs=[...catMap.get(c)].sort();
+      h+=`<div class="mcat${openCats.has(c)?' open':''}"><div class="mcat-row"><label><input type="checkbox" class="mcat-p" data-f="major" value="m:${esc(c)}"${catPOn(c)?' checked':''}> ${esc(c)} <span class="muted" style="font-weight:400">${subs.length}个</span></label>`;
+      h+=subs.length?`<button type="button" class="mcat-exp">${openCats.has(c)?'收起 ▴':'展开 ▾'}</button>`:'';
+      h+='</div><div class="mcat-subs">';
+      for(const z of subs)h+=`<label><input type="checkbox" class="mcat-s" data-f="major" value="s:${esc(z)}"${sOn(z,c)?' checked':''}> ${esc(z)}</label>`;
+      h+='</div></div>';
+    }
+    h+='</div></div>';
+  }
+  h+='</div></div>';
+  box.innerHTML=h;
+  syncFilterUI(); // 初始渲染同样补齐半选（indeterminate）等派生视觉
+  updateHfCnt();
+}
+/* ---- 考生切换 / UI 同步 / 历史记录 ---- */
+function renderStuCur(){
+  const d=Stu.ensure();
+  const el=$('#stu-cur');if(!el)return;
+  if(d)el.innerHTML=`当前考生：<b>${esc(d.name)}</b> · 志愿表 ${d.wish.length} 个 · 历史方案 ${d.history.length} 条`;
+  else el.textContent='尚未选择考生';
+  $('#stu-list').innerHTML=Stu.reg.map(s=>`<option value="${esc(s.name)}">`).join('');
+}
+function fillHomeFromInput(li){
+  if(!li)return;
+  if(li.score)$('#in-score').value=li.score;
+  if(li.rankInput)$('#in-rank').value=li.rankInput;
+  if(li.cat){State.cat=li.cat;$$('#in-cat button').forEach(b=>b.classList.toggle('on',b.dataset.v===li.cat));}
+  if(li.examYear)$('#in-year').value=li.examYear;
+  if(li.jhlb)$('#in-jhlb').value=li.jhlb;
+  if(li.limit!=null)$('#in-limit').value=li.limit;
+}
+function applyStuToUI(go){
+  const d=Stu.ensure();
+  const nameEl=$('#stu-name');if(nameEl)nameEl.value=d?d.name:'';
+  State.wish=d?d.wish:[];
+  State.idxFilter=d&&d.idxFilter?d.idxFilter:EMPTY_FILTER();
+  State.result=null;State.filterTier=0;State.shown=0;
+  buildHomeFilter();renderWishBar();renderStuCur();
+  const li=d&&d.lastInput;
+  if(li){
+    fillHomeFromInput(li);State.input={...li};
+    if(li.rank0&&Algo.candidateYears(li.examYear).length){
+      State.result=Algo.buildRecommendation({examYear:li.examYear,cat:li.cat,rank0:li.rank0,jhlbMode:li.jhlb||'普通类'});
+      if(go)location.hash='#/results';else renderResults();
+    }
+  }
+  homePreview();
+}
+function switchStudent(rawName){
+  const name=String(rawName||'').trim();
+  if(!name){toast('请先输入考生姓名');return;}
+  const {isNew}=Stu.createOrSwitch(name);
+  applyStuToUI(false);
+  toast(isNew?`已为「${name}」建立新档案`:`已切换到考生「${name}」`);
+}
+function fmtTime(ts){const d=new Date(ts);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function openHist(){renderHist();$('#hist-modal').style.display='';$('#hist-mask').style.display='';}
+function closeHist(){$('#hist-modal').style.display='none';$('#hist-mask').style.display='none';}
+function renderHist(){
+  const el=$('#hist-body');if(!el)return;
+  if(!Stu.reg.length){el.innerHTML='<div class="wish-empty">尚无考生档案——在首页输入姓名点"建档/切换"即可创建</div>';return;}
+  // 列出所有考生，每人展开其历史方案列表（可点击切换考生、点击方案恢复）
+  el.innerHTML=Stu.reg.map((s,idx)=>{
+    const d=Object.assign({name:'',wish:[],lastInput:null,idxFilter:EMPTY_FILTER(),history:[]},LS.get('stuData:'+s.id,{}));
+    if(!d.name)d.name=s.name;
+    const isCur=s.id===Stu.curId;
+    const histHtml=(d.history||[]).length?(d.history||[]).map((h,i)=>`<div class="hist-row" style="padding-left:28px">
+      <span class="ht">${fmtTime(h.at)}</span>
+      <span class="muted">${h.input.examYear}届 · ${esc(h.input.cat)} · ${h.input.score||'—'}分 / 位次${fmtN(h.input.rank0)} · ${h.input.limit?h.input.limit+'个':'全部'}</span>
+      <span style="flex:1"></span>
+      <span class="muted">${(h.counts||[]).map(c=>c.name+c.n).join(' · ')}</span>
+      <button class="btn btn-outline" style="padding:4px 12px;font-size:12.5px" data-stu="${s.id}" data-restore="${i}">查看该方案</button>
+      <button class="del" style="color:var(--danger);font-size:12.5px;padding:2px 8px;border:1px solid var(--border);border-radius:99px" data-stu="${s.id}" data-delhist="${i}">删除</button>
+    </div>`).join(''):'<div class="muted" style="padding:6px 28px;font-size:12.5px">暂无历史方案</div>';
+    return `<details class="stu-hist-block"${isCur?' open':''} data-stu="${s.id}">
+      <summary style="cursor:pointer;padding:10px 0;font-size:14.5px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${isCur?'<span class="badge t4">当前</span>':''}
+        <span>${esc(d.name)}</span>
+        <span class="muted" style="font-weight:400;font-size:12.5px">志愿表 ${d.wish.length} 个 · 历史方案 ${(d.history||[]).length} 条</span>
+        ${isCur?'':`<button class="btn btn-outline" style="padding:3px 10px;font-size:12px" data-switchstu="${s.id}">切换到此考生</button>`}
+        ${isCur?`<button class="del" style="color:var(--danger);font-size:12px;padding:2px 8px;border:1px solid var(--border);border-radius:99px;margin-left:auto" data-delstu="${s.id}">删除档案</button>`:''}
+      </summary>
+      ${histHtml}
+    </details>`;
+  }).join('');
+  // 事件绑定
+  $$('#hist-body [data-switchstu]').forEach(b=>b.onclick=()=>{
+    const stu=Stu.reg.find(s=>s.id===b.dataset.switchstu);if(stu){Stu.curId=stu.id;LS.set('stuCur',stu.id);Stu.ensure();applyStuToUI(false);renderHist();toast(`已切换到考生「${stu.name}」`);}
+  });
+  $$('#hist-body [data-restore]').forEach(b=>b.onclick=()=>{
+    const sid=b.dataset.stu,ri=+b.dataset.restore;
+    const stu=Stu.reg.find(s=>s.id===sid);if(stu){Stu.curId=sid;LS.set('stuCur',sid);Stu.ensure();}
+    closeHist();restoreHist(ri);
+  });
+  $$('#hist-body [data-delhist]').forEach(b=>b.onclick=()=>{
+    const sid=b.dataset.stu,ri=+b.dataset.delhist;
+    const dd=Object.assign({history:[]},LS.get('stuData:'+sid,{}));
+    (dd.history||[]).splice(ri,1);LS.set('stuData:'+sid,dd);renderHist();
+  });
+  $$('#hist-body [data-delstu]').forEach(b=>b.onclick=()=>{
+    const sid=b.dataset.delstu;const stu=Stu.reg.find(s=>s.id===sid);if(!stu)return;
+    if(!confirm(`确定删除考生「${stu.name}」的全部档案？\n（含志愿表、筛选偏好和历史记录，删除后不可恢复）`))return;
+    Stu.remove(sid);applyStuToUI();renderHist();toast('档案已删除');
+  });
+}
+function restoreHist(i){
+  const d=Stu.ensure();const h=d.history[i];if(!h)return;
+  State.idxFilter=h.idxFilter?h.idxFilter:EMPTY_FILTER();
+  d.idxFilter=State.idxFilter;Stu.save();
+  State.input={...h.input};
+  fillHomeFromInput(h.input);
+  buildHomeFilter();
+  if(!h.input.rank0||!Algo.candidateYears(h.input.examYear).length){toast('该方案所需年份数据当前不可用');return;}
+  State.result=Algo.buildRecommendation({examYear:h.input.examYear,cat:h.input.cat,rank0:h.input.rank0,jhlbMode:h.input.jhlb||'普通类'});
+  State.filterTier=0;State.shown=0;
+  closeHist();location.hash='#/results';
+}
+function homeInput(){
+  return {
+    examYear:+$('#in-year').value,
+    cat:State.cat,
+    score:+$('#in-score').value||null,
+    rankInput:+$('#in-rank').value||null,
+    jhlb:$('#in-jhlb').value,
+    limit:+$('#in-limit').value
+  };
+}
+function homePreview(){
+  const inp=homeInput();const cat=inp.cat;
+  let msg='';let rank0=null;
+  if(inp.rankInput){rank0=inp.rankInput;msg=`使用输入位次 R0 = ${fmtN(rank0)}`;}
+  else if(inp.score){
+    const years=Algo.candidateYears(inp.examYear);
+    const y=years[0];
+    if(y){
+      const r=Store.rankOfScore(y,cat,inp.score);
+      rank0=r;
+      msg=inp.score>0?`按 ${y} 年${cat}一分一段：${inp.score} 分 ≈ 位次 ${r?fmtN(r):'超出范围'}（换算年份取自最新可用官方数据）`:'';
+    }else msg='尚无本地录取数据，请先到数据中心爬取（首次使用自动开始）';
+  }
+  $('#home-conv').textContent=msg;
+  State.input={...inp,rank0};
+  renderHomeStatus();
+}
+function renderHomeStatus(){
+  const el=$('#home-status');const inp=homeInput();
+  const years=NEW_GK_YEARS.filter(y=>y<=inp.examYear);
+  const have=years.filter(y=>Store.years[y]);
+  if(have.length===years.length&&have.length){
+    const latest=Store.years[Math.max(...have)];
+    el.innerHTML=`<span class="badge t5">数据就绪</span> <span class="muted">本地已有 ${have.join('、')} 年官方数据（${latest.crawledAt?latest.crawledAt.slice(0,10):''}爬取）</span>`;
+  }else if(have.length){
+    el.innerHTML=`<span class="badge t2">部分数据</span> <span class="muted">已有 ${have.join('、')} 年，其余年份将自动补抓</span>`;
+  }else{
+    el.innerHTML=`<span class="badge t1">无数据</span> <span class="muted">点击下方按钮将自动从官网爬取（约1-3分钟，仅首次）</span>`;
+  }
+}
+async function startRecommend(){
+  const inp=homeInput();
+  if(!inp.score&&!inp.rankInput){toast('请填写分数或位次');return;}
+  // 考生建档：姓名框有名字则自动建档/切换，保证志愿数据按人隔离
+  const rawName=($('#stu-name').value||'').trim();
+  if(!rawName){toast('请先在上方输入考生姓名（点"建档/切换"）');return;}
+  if(!Stu.data||Stu.data.name!==rawName){
+    Stu.createOrSwitch(rawName);
+    State.wish=Stu.data.wish;State.idxFilter=Stu.data.idxFilter||EMPTY_FILTER();
+    buildHomeFilter();renderWishBar();renderStuCur();
+  }
+  // 确保参考年份（届别之前的3年）数据就绪：缺年份则爬官网；老高考年仅一分一段时自动转掌上高考补抓
+  const need=NEW_GK_YEARS.filter(y=>y<inp.examYear);
+  const missing=need.filter(y=>{const p=Store.years[y];return !p||(y>=SUPP_MIN_YEAR&&(p.rankOnly||(p.suppAt&&(!p.suppComplete||p.suppSource!==SUPP_SRC))));});
+  if(missing.length){
+    $('#home-status').innerHTML=`<span class="spin"></span> <span class="muted">正在补全 ${missing.join('、')} 年参考数据… 先用已就绪年份出结果，老高考年份在后台继续补抓，稍后重新生成即可看到近三年</span>`;
+    autoCrawl(missing,true); // 不阻塞：后台补抓（开机时也会自动开始）
+    const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+    const t0=Date.now();
+    // 最多等90秒，直到最新参考年（如2025）齐全且次年（2024）已有首批补抓数据
+    while(Date.now()-t0<90000){
+      const ys=Algo.candidateYears(inp.examYear);
+      if(ys.length>=2&&(Store.years[ys[1]]?.groups?.length||0)>100)break;
+      if(ys.length>=3)break;
+      await sleep(1500);
+    }
+    $('#btn-go').disabled=false;
+  }
+  if(!Algo.candidateYears(inp.examYear).length){
+    toast('该届别暂无可用的参考录取数据');
+    location.hash='#/browse';return;
+  }
+  // 位次换算：优先输入位次；否则用该届最新可用年份的一分一段表换算
+  let rank0=inp.rankInput,convNote='';
+  if(!rank0&&inp.score){
+    const cy=Algo.candidateYears(inp.examYear)[0];
+    if(cy){
+      rank0=Store.rankOfScore(cy,inp.cat,inp.score);
+      if(rank0)convNote=`按 ${cy} 年${inp.cat}一分一段：${inp.score} 分 ≈ 位次 ${fmtN(rank0)}`;
+    }
+  }
+  if(!rank0){toast('分数换算失败，请直接输入位次');return;}
+  if(convNote)toast(convNote);
+  State.input={...inp,rank0};
+  State.result=Algo.buildRecommendation({examYear:inp.examYear,cat:inp.cat,rank0,jhlbMode:inp.jhlb});
+  State.filterTier=0;State.shown=0;
+  computePlan();
+  // 按考生独立存档：输入、筛选、历史快照（自动，可日后恢复查看）
+  Stu.data.lastInput=State.input;
+  Stu.data.idxFilter=State.idxFilter;
+  const counts=TIERS.map(t=>({...t,n:State.plan.filter(it=>it.tier.id===t.id).length}));
+  Stu.data.history.unshift({
+    at:Date.now(),
+    input:{...State.input},
+    idxFilter:JSON.parse(JSON.stringify(State.idxFilter)),
+    counts:counts.map(c=>({id:c.id,name:c.name,n:c.n}))
+  });
+  if(Stu.data.history.length>20)Stu.data.history.length=20;
+  Stu.save();renderStuCur();
+  if(location.hash==='#/results')renderResults();else location.hash='#/results';
+}
+
+/* ---- 8.2 结果页 ---- */
+function initResults(){
+  $('#f-sort').onchange=renderResultList;
+  $('#f-byr').onchange=renderResults; // 保研率筛选改变时重算统计+列表
+  $('#f-kw').oninput=()=>{clearTimeout(State._kwT);State._kwT=setTimeout(renderResults,250);};
+  $('#rs-more').onclick=()=>{State.shown+=60;renderResultList(true);};
+  // 志愿表弹窗
+  $('#wish-view').onclick=openWishModal;
+  $('#wish-close').onclick=closeWishModal;
+  $('#wish-mask').onclick=closeWishModal;
+  $('#byr-close').onclick=closeByrModal;
+  $('#byr-mask').onclick=closeByrModal;
+  $('#wish-clear').onclick=()=>{
+    if(!State.wish.length)return;
+    if(!confirm('确定清空当前考生的志愿表？'))return;
+    State.wish=[];saveWish();
+    renderWishModal();renderWishBar();syncWishBtns();renderStuCur();toast('已清空');};
+  $('#wish-csv').onclick=wishCSV;
+  $('#wish-copy').onclick=wishCopy;
+  // 历史记录弹窗（按钮在首页，弹窗为全局元素）
+  $('#hist-close').onclick=closeHist;
+  $('#hist-mask').onclick=closeHist;
+  // 列表事件委托：志愿表按钮 + 专业明细展开收起（卡片是整体重绘的）
+  $('#rs-list').addEventListener('click',e=>{
+    const bt=e.target.closest('.byr-tag[data-byr]');
+    if(bt){openByrModal(bt.dataset.byr);return;}
+    const wb=e.target.closest('.wish-btn');
+    if(wb){toggleWish(wb.dataset.wish);return;}
+    const b=e.target.closest('.mz-toggle');if(!b)return;
+    const tb=b.closest('table').querySelector('tbody.mz-more');if(!tb)return;
+    const hide=tb.style.display!=='none';
+    tb.style.display=hide?'none':'';
+    b.textContent=hide?`展开其余 ${tb.rows.length} 个专业`:'收起全部专业';
+  });
+}
+/* ---- 筛选与方案计算 ---- */
+function collectFilter(){
+  // 筛选条件来自首页"筛选偏好"（生成前先选好），快速关键词来自结果页搜索框
+  const IF=normIF(State.idxFilter);
+  return {prov:new Set(IF.prov),city:new Set(IF.city||[]),major:new Set(IF.major),level:new Set(IF.level),
+    kw:($('#f-kw')?$('#f-kw').value:'').trim(),
+    byr:$('#f-byr')?+$('#f-byr').value:0};
+}
+function matchFilter(it,F){
+  const info=schoolInfo(it.yx);
+  if((F.prov.size||F.city.size)&&!(F.prov.has(info.prov)||(F.city.size&&info.city&&F.city.has(info.prov+'|'+info.city))))return false;
+  if(F.level.size&&!((F.level.has('985')&&info.f985)||(F.level.has('211')&&info.f211)||(F.level.has('双一流')&&info.dual)||(F.level.has('保研')&&!byrOf(it.yx).noQual)||(F.level.has('普通本科')&&!info.dual)))return false;
+  if(F.major.size){ // 同类内 OR：组内任一专业命中即可（括号方向已做归一合并）
+    let ok=false;
+    for(const m of it.majors.values()){
+      const z=normZm(m.zm);
+      if(F.major.has('s:'+z)){ok=true;break;}
+      const c=majorCat(z);
+      if(F.major.has('m:'+c)){ok=true;break;}
+      if(F.major.has('g:'+majorGate(c))){ok=true;break;}
+    }
+    if(!ok)return false;
+  }
+  if(F.kw&&!(it.yx.includes(F.kw)||[...it.majors.values()].some(m=>m.zm.includes(F.kw))))return false;
+  if(F.byr&&!byrPass(it.yx,F.byr))return false; // 保研率筛选
+  return true;
+}
+function computePlan(){
+  const r=State.result,inp=State.input;
+  const F=collectFilter();
+  const pool=r.items.filter(it=>matchFilter(it,F));
+  State.poolAll=pool;State.poolN=pool.length;
+  State.foldN=0;State.plan=pool;
+  if(inp.limit){
+    // 低参考价值候选折叠：极端位次（k<0.30 或 k>3.5）不进入方案，只在统计中注明数量
+    const core=pool.filter(it=>it.k>=0.30&&it.k<=3.5);
+    State.foldN=pool.length-core.length;
+    State.plan=quotaSlice(core,inp.limit);
+  }
+}
+function renderResults(){
+  const r=State.result,inp=State.input;if(!r)return;
+  $('#rs-crumb').innerHTML=`${inp.examYear}届 · ${inp.cat} · 位次 ${fmtN(inp.rank0)} · 官方录取年份 ${r.years.join(' / ')} <a href="#/">返回修改</a>`;
+  computePlan();
+  // 统计 chips：按院校专业组级档位计数（每张卡片计1次，卡片内专业档位在卡片内分组展示）
+  const base=inp.limit?State.plan:State.poolAll;
+  const counts=TIERS.map(t=>({...t,n:0}));
+  for(const it of base)counts.find(c=>c.id===it.tier.id).n++;
+  State.counts=counts;
+  $('#rs-stat').innerHTML=counts.map(c=>
+    `<div class="stat-chip ${c.cls} ${State.filterTier===c.id?'on':''}${c.n?'':' zero'}" data-t="${c.id}" title="${c.desc}"><div class="n">${c.n}</div><div class="t">${c.name}</div></div>`).join('');
+  $$('#rs-stat .stat-chip').forEach(ch=>ch.onclick=()=>{
+    const t=+ch.dataset.t;State.filterTier=State.filterTier===t?0:t;renderResults();});
+  $('#rs-total').textContent=inp.limit
+    ?`候选 ${fmtN(State.poolN)} 个 · 本方案恰好 ${State.plan.length} 个志愿（以稳为主梯度分配）`
+    :`候选 ${fmtN(State.poolN)} 个院校专业组 · 全部显示`;
+  // 已选筛选摘要（来自首页筛选偏好，默认折叠，点击展开）
+  const IF=normIF(State.idxFilter),fDesc=[];
+  if(IF.prov.length)fDesc.push('地区：'+IF.prov.join('、'));
+  if(IF.city.length)fDesc.push('城市：'+IF.city.map(v=>{const a=String(v).split('|');return a[a.length-1];}).join('、'));
+  if(IF.major.length)fDesc.push('专业：'+IF.major.map(v=>v.replace(/^[gms]:/,'')).join('、'));
+  if(IF.level.length)fDesc.push('层次：'+IF.level.join('、'));
+  $('#rs-fsum').innerHTML=fDesc.length?`<details class="fsum"><summary>已选筛选（${fDesc.length} 类条件）</summary><div class="fsum-body">${esc(fDesc.join(' ｜ '))}　<a href="#/">返回首页修改</a></div></details>`:'';
+  renderResultList();
+}
+/* ---- 院校荣誉标签（权威公开名单，按规范化校名精确匹配，不含主观推断） ---- */
+const _F985=new Set(['清华大学','北京大学','中国人民大学','北京航空航天大学','北京理工大学','中国农业大学','北京师范大学','中央民族大学','南开大学','天津大学','大连理工大学','吉林大学','哈尔滨工业大学','复旦大学','同济大学','上海交通大学','华东师范大学','南京大学','东南大学','浙江大学','中国科学技术大学','厦门大学','山东大学','中国海洋大学','武汉大学','华中科技大学','湖南大学','中南大学','国防科技大学','中山大学','华南理工大学','四川大学','电子科技大学','重庆大学','西安交通大学','西北工业大学','兰州大学','东北大学','西北农林科技大学']);
+const _F211=new Set(['北京交通大学','北京工业大学','北京科技大学','北京化工大学','北京邮电大学','北京林业大学','北京中医药大学','北京外国语大学','中国传媒大学','中央财经大学','对外经济贸易大学','北京体育大学','中央音乐学院','中国政法大学','华北电力大学','中国矿业大学','中国石油大学','中国地质大学','天津医科大学','河北工业大学','太原理工大学','内蒙古大学','辽宁大学','大连海事大学','延边大学','东北师范大学','哈尔滨工程大学','东北农业大学','东北林业大学','华东理工大学','东华大学','上海外国语大学','上海财经大学','上海大学','海军军医大学','苏州大学','南京航空航天大学','南京理工大学','河海大学','江南大学','南京农业大学','中国药科大学','南京师范大学','安徽大学','合肥工业大学','福州大学','南昌大学','郑州大学','武汉理工大学','华中农业大学','华中师范大学','中南财经政法大学','湖南师范大学','暨南大学','华南师范大学','广西大学','海南大学','四川农业大学','西南交通大学','西南财经大学','贵州大学','云南大学','西藏大学','西北大学','西安电子科技大学','长安大学','陕西师范大学','空军军医大学','青海大学','宁夏大学','新疆大学','石河子大学','西南大学']);
+const _DUAL_EXTRA=new Set(['北京协和医学院','首都师范大学','外交学院','中国人民公安大学','中国科学院大学','中国音乐学院','中央美术学院','中央戏剧学院','天津工业大学','天津中医药大学','上海体育学院','上海音乐学院','上海海洋大学','上海中医药大学','南京中医药大学','南京邮电大学','南京林业大学','南京信息工程大学','宁波大学','中国美术学院','河南大学','广州中医药大学','成都理工大学','西南石油大学','成都中医药大学','山西大学','南京医科大学','湘潭大学','南方科技大学','上海科技大学','华南农业大学','广州医科大学']);
+const _BAOYAN_EXTRA=new Set(['首都医科大学','首都经济贸易大学','天津师范大学','河北大学','燕山大学','内蒙古农业大学','内蒙古师范大学','长春理工大学','沈阳农业大学','沈阳药科大学','中国医科大学','东北财经大学','黑龙江大学','哈尔滨医科大学','东北石油大学','江苏大学','南京工业大学','扬州大学','杭州电子科技大学','浙江工业大学','浙江师范大学','安徽农业大学','安徽师范大学','福建农林大学','福建师范大学','华侨大学','江西财经大学','江西师范大学','山东师范大学','青岛大学','武汉科技大学','湖北大学','长沙理工大学','汕头大学','深圳大学','广州大学','广东工业大学','西南政法大学','昆明理工大学','西安建筑科技大学','西安理工大学','西北师范大学']);
+const _HONOR={};
+function honorsOf(name){
+  const b=String(name||'').replace(/\s+/g,'').replace(/[（(【\[].*$/,'').trim();
+  if(_HONOR[b])return _HONOR[b];
+  const f985=_F985.has(b),f211=_F211.has(b),dual=f985||f211||_DUAL_EXTRA.has(b);
+  return _HONOR[b]={f985,f211,dual,by:dual||_BAOYAN_EXTRA.has(b)};
+}
+/* ---- 保研率数据（公开榜单，可替换为爬取 JSON） ----
+ * 26届=2026届保研率（来源：高顿教育公开榜单 2026-09，233所院校）
+ * 27届=2027届保研率（来源：头条公开榜单 2027届，12所头部院校）
+ * 28届(预测)=程序根据 26→27 趋势推算（有两年数据取增量30%阻尼，仅一年取+2%微增），标注【预测】
+ * ★ 后续可用爬取的 JSON 直接替换 _BYR_26 / _BYR_27 两个对象即可 */
+const _BYR_26={"北京大学":65.07,"中国科学院大学":64.85,"清华大学":61.20,"中国科学技术大学":56.76,"南京大学":48.05,"北京航空航天大学":47.14,"上海科技大学":46.74,"上海交通大学":45.95,"复旦大学":44.13,"中国人民大学":39.02,"浙江大学":38.42,"南开大学":37.45,"华中科技大学":37.20,"同济大学":35.54,"华东师范大学":35.48,"西北工业大学":35.46,"北京外国语大学":35.40,"天津大学":35.05,"北京师范大学":34.07,"哈尔滨工业大学":33.94,"中国农业大学":32.56,"东南大学":32.24,"外交学院":30.61,"东北大学":30.52,"北京邮电大学":30.13,"电子科技大学":30.02,"哈尔滨工程大学":28.46,"四川大学":28.06,"厦门大学":27.83,"南京航空航天大学":26.72,"北京大学医学部":26.13,"中南大学":25.71,"中国地质大学（北京）":25.54,"西北农林科技大学":25.49,"山东大学":25.27,"重庆大学":25.11,"华东理工大学":24.83,"华南理工大学":24.59,"大连理工大学":23.67,"上海财经大学":23.43,"中国石油大学（北京）":23.30,"中国地质大学（武汉）":22.37,"对外经济贸易大学":22.37,"中国海洋大学":22.36,"南京农业大学":21.75,"吉林大学":21.68,"国际关系学院":21.51,"北京林业大学":21.10,"东北林业大学":20.74,"上海外国语大学":20.72,"北京化工大学":20.15,"河海大学":19.55,"西南交通大学":19.00,"西南财经大学":17.77,"北京工业大学":17.52,"长安大学":17.45,"江南大学":16.85,"南昌大学":16.20,"郑州大学":15.84,"苏州大学":15.54,"东北师范大学":15.00,"南京医科大学":14.75,"大连海事大学":14.73,"中南财经政法大学":14.71,"中国医科大学":14.63,"北京中医药大学":14.61,"陕西师范大学":14.32,"湖南师范大学":17.56,"东北财经大学":13.74,"云南大学":13.65,"华中师范大学":13.35,"内蒙古大学":13.14,"湘潭大学":12.80,"河北工业大学":12.47,"石河子大学":12.17,"辽宁大学":12.09,"南京中医药大学":11.97,"东北农业大学":11.89,"太原理工大学":11.87,"延边大学":11.83,"安徽大学":11.82,"南京邮电大学":11.32,"南方医科大学":11.13,"燕山大学":10.81,"广西大学":10.79,"温州医科大学":10.37,"四川农业大学":10.26,"暨南大学":10.01,"上海体育大学":9.97,"首都经济贸易大学":9.96,"华南师范大学":9.81,"中国美术学院":9.80,"南京林业大学":9.71,"河北大学":9.50,"贵州大学":9.40,"广西师范大学":9.35,"上海海洋大学":9.29,"山西医科大学":9.10,"天津中医药大学":8.97,"沈阳农业大学":8.88,"广州中医药大学":8.85,"安徽医科大学":8.65,"南京信息工程大学":8.21,"湖北大学":8.21,"成都中医药大学":8.07,"上海理工大学":7.95,"山东农业大学":7.91,"宁波大学":7.84,"西南石油大学":7.62,"成都理工大学":7.57,"青岛大学":7.53,"扬州大学":7.51,"辽宁师范大学":7.49,"江西财经大学":7.38,"安徽师范大学":7.33,"西安理工大学":7.24,"安徽农业大学":7.12,"江苏师范大学":7.04,"江西师范大学":6.86,"北京工商大学":6.72,"西南科技大学":6.71,"西南政法大学":6.71,"河南师范大学":6.70,"南京工业大学":6.64,"福建中医药大学":6.55,"浙江师范大学":6.50,"甘肃农业大学":6.49,"吉林农业大学":6.48,"曲阜师范大学":6.44,"西南医科大学":6.42,"黑龙江中医药大学":6.26,"宁夏大学":6.26,"江苏大学":6.26,"华南农业大学":6.24,"华侨大学":6.23,"深圳大学":6.19,"安徽财经大学":6.10,"江西理工大学":6.08,"广州大学":6.07,"西华师范大学":6.02,"河北师范大学":5.96,"河南农业大学":5.87,"河北农业大学":5.83,"天津财经大学":5.71,"三峡大学":5.68,"大连外国语大学":5.65,"福建农林大学":5.59,"西安科技大学":5.54,"天津外国语大学":5.46,"山西中医药大学":5.44,"长春中医药大学":5.41,"济南大学":5.27,"山西师范大学":5.25,"武汉工程大学":5.15,"湖北工业大学":5.10,"沈阳工业大学":5.06,"重庆邮电大学":5.04,"杭州电子科技大学":5.01,"陕西科技大学":4.93,"天津体育学院":4.90,"北京信息科技大学":4.88,"西安工程大学":4.86,"内蒙古科技大学":4.86,"天津师范大学":4.77,"中南林业科技大学":4.74,"山东财经大学":4.72,"南京体育学院":4.66,"山西财经大学":4.63,"吉林财经大学":4.51,"重庆交通大学":4.47,"河南中医药大学":4.47,"安徽工业大学":4.41,"江西中医药大学":4.40,"河北工程大学":4.35,"西南民族大学":4.31,"兰州交通大学":4.31,"昆明理工大学":4.30,"西安工业大学":4.28,"大连交通大学":4.28,"中北大学":4.28,"西北政法大学":4.27,"山西农业大学":4.17,"华东交通大学":4.15,"安徽理工大学":4.14,"北京建筑大学":4.13,"山东建筑大学":4.12,"河南科技大学":4.12,"湖南农业大学":4.09,"东北石油大学":4.08,"辽宁工程技术大学":4.07,"沈阳师范大学":4.04,"河南财经政法大学":4.03,"长沙理工大学":3.99,"四川师范大学":3.98,"青岛科技大学":3.97,"哈尔滨理工大学":3.93,"黑龙江八一农垦大学":3.93,"西安美术学院":3.79,"湖南科技大学":3.77,"成都体育学院":3.73,"山东理工大学":3.66,"华北理工大学":3.65,"延安大学":3.60,"内蒙古工业大学":3.59,"云南师范大学":3.58,"中国民航大学":3.53,"新疆农业大学":3.53,"西安石油大学":3.52,"青海师范大学":3.50,"重庆师范大学":3.43,"广西中医药大学":3.28,"哈尔滨商业大学":3.28,"武汉体育学院":3.27,"天津理工大学":3.24,"杭州师范大学":3.16,"河南工业大学":3.16,"沈阳化工大学":3.16,"西北民族大学":2.89,"吉首大学":2.78,"辽宁科技大学":2.75,"黑龙江科技大学":2.73,"青岛理工大学":2.69,"集美大学":2.65,"西华大学":2.51,"长春工业大学":2.40,"贵州师范大学":2.07,"青海民族大学":2.04,"桂林理工大学":1.81,"哈尔滨师范大学":3.49,"广东海洋大学":1.71,"西南林业大学":1.68,"遵义医科大学":1.66,"海南师范大学":1.57};
+const _BYR_27={"北京大学":69.47,"清华大学":69.30,"中国科学院大学":69.06,"国防科技大学":43.24,"哈尔滨工业大学":43.05,"浙江大学":42.49,"上海交通大学":42.20,"复旦大学":41.04,"同济大学":40.97,"中国人民大学":40.74,"西安交通大学":40.41,"西北工业大学":40.13};
+function byrOf(name){
+  const raw=String(name||'').replace(/\s+/g,'').trim();
+  const b=raw.replace(/[（(【\[].*$/,'').trim();
+  // 按优先级尝试多种名称：原名→全角括号→半角括号→基础名+括号内容拼接→去括号基础名
+  const half=raw.replace(/（/g,'(').replace(/）/g,')');
+  const full=raw.replace(/\(/g,'（').replace(/\)/g,'）');
+  const bAlt=raw.length>b.length?b+raw.substring(b.length).replace(/[（(）【】\[\]]/g,''):'';
+  const cands=[raw,full,half];
+  if(bAlt&&bAlt!==b)cands.push(bAlt);
+  cands.push(b);
+  let r26=null,r27=null;
+  for(const c of cands){
+    if(r26==null&&_BYR_26[c]!=null)r26=_BYR_26[c];
+    if(r27==null&&_BYR_27[c]!=null)r27=_BYR_27[c];
+    if(r26!=null&&r27!=null)break;
+  }
+  if(!r26&&!r27){
+    // 检查是否有保研资格（985/211/双一流/补充名单）
+    const h=honorsOf(name);
+    if(h.by)return {noData:true}; // 有资格但暂无公开数据
+    return {noQual:true}; // 无保研资格
+  }
+  let cur,curJie;
+  if(r27!=null){cur=r27;curJie=27;}else{cur=r26;curJie=26;}
+  let pred;
+  if(r26!=null&&r27!=null)pred=Math.min(75,+(r27+(r27-r26)*0.3).toFixed(1));
+  else pred=Math.min(75,+(cur*1.02).toFixed(1));
+  return {cur,curJie,r26,r27,pred};
+}
+function byrPass(name,threshold){
+  if(!threshold||threshold===0)return true; // 全部
+  const b=byrOf(name);
+  if(threshold===-1)return b&&!b.noQual; // 具有保研资格（含暂无公开数据但有资格的）
+  if(b.noData||b.noQual)return false;
+  return b.cur>=threshold;
+}
+function byrBadge(name){
+  const b=byrOf(name);
+  if(b.noQual)return '<span class="badge byr-tag byr-none">无保研资格</span>';
+  if(b.noData)return '<span class="badge byr-tag byr-none">保研暂无数据</span>';
+  const jieTxt=b.curJie===27?'27届':'26届';
+  return `<span class="badge byr-tag" data-byr="${esc(name)}" title="点击查看保研详情">保研${b.cur}%｜${jieTxt}</span>`;
+}
+function openByrModal(name){
+  const b=byrOf(name);
+  const titleEl=$('#byr-title'),bodyEl=$('#byr-body');
+  if(!titleEl||!bodyEl){console.warn('openByrModal: byr-modal elements not found');return;}
+  titleEl.textContent=name+' · 保研率详情';
+  if(closeByrModal._chart){closeByrModal._chart.dispose();closeByrModal._chart=null;}
+  if(b.noQual){bodyEl.innerHTML='<p class="muted" style="text-align:center;padding:20px 0">该校无硕士研究生推免资格（非985/211/双一流/保研资格院校）</p>';}
+  else if(b.noData){bodyEl.innerHTML='<p class="muted" style="text-align:center;padding:20px 0">暂无保研公开数据</p>';}
+  else{
+    // 图表容器 + 数据行
+    const rows=[];
+    if(b.r26!=null)rows.push(`<div class="byr-detail-row"><span>2026届保研率</span><span class="byr-val">${b.r26}%</span></div>`);
+    if(b.r27!=null)rows.push(`<div class="byr-detail-row"><span>2027届保研率</span><span class="byr-val">${b.r27}%</span></div>`);
+    if(b.pred!=null)rows.push(`<div class="byr-detail-row"><span>2028届保研率<span class="byr-pred-tag">预测</span></span><span class="byr-val">${b.pred}%</span></div>`);
+    rows.push('<p class="muted" style="font-size:12.5px;margin-top:10px;line-height:1.6">数据来源：公开保研榜单（高顿教育/头条等）。保研率=推免人数÷本科毕业生基数，不含强基/长学制等特殊生源。28届为趋势推算，仅供参考，实际以院校公示为准。</p>');
+    bodyEl.innerHTML=`<div id="byr-chart" style="width:100%;height:220px;margin:4px 0 12px"></div>`+rows.join('');
+  }
+  $('#byr-modal').style.display='';$('#byr-mask').style.display='';
+  // 图表需等待布局完成后初始化
+  if(b&&!b.noQual&&!b.noData&&window.echarts){
+    requestAnimationFrame(()=>{
+      const chartEl=$('#byr-chart');if(!chartEl)return;
+      const chart=echarts.init(chartEl);
+      closeByrModal._chart=chart;
+      // 构造数据点：已有届次 + 预测届次
+      const pts=[];
+      if(b.r26!=null)pts.push({jie:'26届',val:b.r26,isPred:false});
+      if(b.r27!=null)pts.push({jie:'27届',val:b.r27,isPred:false});
+      if(b.pred!=null)pts.push({jie:'28届(预测)',val:b.pred,isPred:true});
+      // 主序列：所有真实点（不含预测点），蓝→绿渐变实线
+      const lastIsPred=pts.length>=2&&pts[pts.length-1].isPred;
+      const mainPts=lastIsPred?pts.slice(0,-1):pts;
+      const mainData=mainPts.map(p=>({
+        value:p.val,
+        itemStyle:{
+          color:'#3A8DD8',
+          borderColor:'#fff',borderWidth:2
+        }
+      }));
+      // 预测虚线序列：最后真实点→预测点，绿色虚线
+      let predSeries=null;
+      if(lastIsPred){
+        predSeries={
+          type:'line',smooth:true,symbolSize:10,
+          lineStyle:{color:'#5DBB63',type:'dashed',width:3},
+          itemStyle:{color:'#5DBB63',borderColor:'#fff',borderWidth:2},
+          data:pts.map((p,i)=>{
+            if(i===pts.length-2)return p.val; // 最后一个真实点
+            if(i===pts.length-1)return p.val; // 预测点
+            return null;
+          })
+        };
+      }
+      const series=[{
+        type:'line',smooth:true,symbolSize:10,
+        lineStyle:{
+          width:3,
+          color:{type:'linear',x:0,y:0,x2:1,y2:0,
+            colorStops:[{offset:0,color:'#3A8DD8'},{offset:1,color:'#5DBB63'}]}
+        },
+        areaStyle:{
+          color:{type:'linear',x:0,y:0,x2:0,y2:1,
+            colorStops:[{offset:0,color:'rgba(58,141,216,0.25)'},{offset:1,color:'rgba(58,141,216,0.02)'}]}
+        },
+        data:mainData
+      }];
+      if(predSeries)series.push(predSeries);
+      chart.setOption({
+        grid:{left:40,right:16,top:24,bottom:28,containLabel:true},
+        xAxis:{type:'category',data:pts.map(p=>p.jie),axisTick:{show:false},
+          axisLine:{lineStyle:{color:'#D4CFC4'}},
+          axisLabel:{color:'#6B6B6B',fontSize:12}},
+        yAxis:{type:'value',name:'保研率%',nameTextStyle:{color:'#6B6B6B',fontSize:11},
+          axisLine:{show:false},axisTick:{show:false},
+          axisLabel:{color:'#6B6B6B',fontSize:11,formatter:v=>v+'%'},
+          splitLine:{lineStyle:{color:'#F0ECE4',type:'dashed'}}},
+        tooltip:{trigger:'item',confine:true,
+          formatter:p=>{
+            const pt=pts[p.dataIndex];
+            if(!pt)return '';
+            const tail=pt.isPred?' <span style="color:#5DBB63;font-weight:700">【预测】</span>':'';
+            return `<b>${pt.jie}</b> 保研率 <b>${pt.val}%</b>${tail}`;
+          }},
+        series
+      });
+    });
+  }
+}
+function closeByrModal(){
+  if(closeByrModal._chart){closeByrModal._chart.dispose();closeByrModal._chart=null;}
+  $('#byr-modal').style.display='none';$('#byr-mask').style.display='none';
+}
+/* 城市/省份映射：来自掌上高考 static-data 全量校单（与 _zgIdMap 同一次请求，含 pro/city 字段），
+   永久本地缓存；未加载/查无时按校名关键词推断省份，城市为空 */
+const CITY={
+  map:LS.get('zgCity',{})||{},_p:null,
+  load(){
+    if(this._p)return this._p;
+    this._p=(async()=>{
+      try{
+        const m=await Crawler._zgIdMap();
+        const out=Object.assign({},this.map);
+        for(const k in m){const e=m[k]||{};const c=String(e.c||'').replace(/市$/,'');
+          if(e.p||c)out[k]={p:e.p||'',c};}
+        this.map=out;LS.set('zgCity',out);
+        try{buildHomeFilter();}catch(e){}
+        if(State.result&&String(location.hash).indexOf('#/results')===0){try{renderResults();}catch(e){}}
+      }catch(e){this._p=null;} // 拉取失败不缓存流程，下次重试
+      return this.map;
+    })();
+    return this._p;
+  }
+};
+function schoolInfo(name){
+  // 优先用全量校单的省份/城市（公开常识映射兜底，仅用于筛选参考，不影响录取数据本身）
+  const n=name||'';
+  const cm=CITY.map[Meta.norm(n)];
+  let prov=(cm&&cm.p)||'其他';
+  if(!prov||prov==='其他'){for(const [k,v] of PROV_KW){if(n.includes(k)){prov=v;break;}}}
+  let region='其他';for(const rg in REGIONS)if(REGIONS[rg].includes(prov)){region=rg;break;}
+  let type='综合';for(const [k,v] of TYPE_MAP){if(n.includes(k)){type=v;break;}}
+  return {prov,region,type,city:(cm&&cm.c)||'',...honorsOf(n)};
+}
+/* 省份关键词（先省名后城市别名，按顺序匹配） */
+const PROV_KW=[['北京','北京'],['天津','天津'],['上海','上海'],['重庆','重庆'],
+ ['河北','河北'],['石家庄','河北'],['保定','河北'],['唐山','河北'],['秦皇岛','河北'],['邯郸','河北'],['廊坊','河北'],['沧州','河北'],
+ ['山西','山西'],['太原','山西'],['大同','山西'],['晋中','山西'],['运城','山西'],['临汾','山西'],
+ ['内蒙古','内蒙古'],['呼和浩特','内蒙古'],['包头','内蒙古'],['呼伦贝尔','内蒙古'],['赤峰','内蒙古'],['鄂尔多斯','内蒙古'],['通辽','内蒙古'],
+ ['辽宁','辽宁'],['沈阳','辽宁'],['大连','辽宁'],['锦州','辽宁'],['鞍山','辽宁'],['抚顺','辽宁'],
+ ['吉林','吉林'],['长春','吉林'],['延边','吉林'],['四平','吉林'],['通化','吉林'],
+ ['黑龙江','黑龙江'],['哈尔滨','黑龙江'],['齐齐哈尔','黑龙江'],['大庆','黑龙江'],['牡丹江','黑龙江'],
+ ['江苏','江苏'],['南京','江苏'],['苏州','江苏'],['无锡','江苏'],['常州','江苏'],['南通','江苏'],['徐州','江苏'],['扬州','江苏'],['镇江','江苏'],['盐城','江苏'],['淮安','江苏'],
+ ['浙江','浙江'],['杭州','浙江'],['宁波','浙江'],['温州','浙江'],['嘉兴','浙江'],['绍兴','浙江'],['金华','浙江'],
+ ['安徽','安徽'],['合肥','安徽'],['芜湖','安徽'],['蚌埠','安徽'],['马鞍山','安徽'],
+ ['福建','福建'],['福州','福建'],['厦门','福建'],['泉州','福建'],['漳州','福建'],
+ ['江西','江西'],['南昌','江西'],['赣州','江西'],['九江','江西'],
+ ['山东','山东'],['济南','山东'],['青岛','山东'],['烟台','山东'],['潍坊','山东'],['威海','山东'],['淄博','山东'],['泰安','山东'],['济宁','山东'],
+ ['河南','河南'],['郑州','河南'],['洛阳','河南'],['开封','河南'],['新乡','河南'],['焦作','河南'],
+ ['湖北','湖北'],['武汉','湖北'],['宜昌','湖北'],['襄阳','湖北'],['荆州','湖北'],
+ ['湖南','湖南'],['长沙','湖南'],['株洲','湖南'],['湘潭','湖南'],['衡阳','湖南'],['岳阳','湖南'],['常德','湖南'],
+ ['广东','广东'],['广州','广东'],['深圳','广东'],['珠海','广东'],['汕头','广东'],['湛江','广东'],['佛山','广东'],
+ ['广西','广西'],['南宁','广西'],['桂林','广西'],['柳州','广西'],['北海','广西'],
+ ['海南','海南'],['三亚','海南'],
+ ['四川','四川'],['成都','四川'],['绵阳','四川'],['泸州','四川'],['宜宾','四川'],
+ ['贵州','贵州'],['贵阳','贵州'],['遵义','贵州'],
+ ['云南','云南'],['昆明','云南'],['大理','云南'],['曲靖','云南'],
+ ['西藏','西藏'],
+ ['陕西','陕西'],['西安','陕西'],['咸阳','陕西'],['宝鸡','陕西'],['汉中','陕西'],['延安','陕西'],
+ ['甘肃','甘肃'],['兰州','甘肃'],['天水','甘肃'],
+ ['青海','青海'],['西宁','青海'],
+ ['宁夏','宁夏'],['银川','宁夏'],
+ ['新疆','新疆'],['乌鲁木齐','新疆'],['石河子','新疆'],['喀什','新疆']];
+/* 大区 → 省份 */
+const REGIONS={
+ '华北':['北京','天津','河北','山西','内蒙古'],
+ '东北':['辽宁','吉林','黑龙江'],
+ '华东':['上海','江苏','浙江','安徽','福建','江西','山东'],
+ '华中':['河南','湖北','湖南'],
+ '华南':['广东','广西','海南'],
+ '西南':['重庆','四川','贵州','云南','西藏'],
+ '西北':['陕西','甘肃','青海','宁夏','新疆'],
+ '其他':['其他']
+};
+const TYPE_MAP=[['理工','理工'],['科技','理工'],['工业','理工'],['工程','理工'],['邮电','理工'],['电子','理工'],['信息','理工'],
+ ['师范','师范'],['民族','民族'],['财经','财经'],['经济','财经'],['金融','财经'],['商贸','财经'],
+ ['医科','医药'],['医药','医药'],['中医药','医药'],['药科','医药'],['医科大','医药'],
+ ['农业','农林'],['林业','农林'],['海洋','农林'],
+ ['政法','政法'],['警察','政法'],['司法','政法'],['公安','政法'],
+ ['外国语','语言'],['语言','语言'],['传媒','语言'],
+ ['体育','体育'],['艺术','艺术'],['音乐','艺术'],['美术','艺术'],
+ ['交通','理工'],['建筑','理工'],['水利','理工'],['电力','理工'],['石油','理工'],['化工','理工'],['轻工','理工'],['纺织','理工'],['地质','理工'],['矿业','理工'],['航空','理工'],['航天','理工'],['兵工','理工']];
+/* 专业名称→大类（按关键词顺序匹配，先特异后宽泛；尽量覆盖所有专业，减少"其他专业"出现） */
+const MAJOR_KW=[
+ /* ========== 跨门类特异词（置于最前，防止被宽泛词截走） ========== */
+ ['戏剧影视','戏剧与影视'],['新媒体艺术','美术与设计'],
+ ['健康服务','公共管理类'],['大数据管理','管理科学与工程'],['邮政管理','管理科学与工程'],
+ ['资源与环境经济','经济学类'],['能源经济','经济学类'],['经济统计','经济学类'],
+ ['农林经济管理','种植与园艺'],['农业经济','种植与园艺'],['经济动物','动物与水产'],['经济林','林学与草业'],
+ ['经济犯罪侦查','公安与警务'],['政治学、经济学与哲学','政治学与马克思主义'],
+ /* ========== 计算机与电子信息（特异词须先于安全/信息等宽泛词） ========== */
+ ['网络空间','计算机与电子信息'],['信息对抗','计算机与电子信息'],['保密技术','计算机与电子信息'],['认知安全','计算机与电子信息'],
+ ['密码','计算机与电子信息'],['具身智能','计算机与电子信息'],['工业互联网','计算机与电子信息'],['智能视觉','计算机与电子信息'],['智能视听','计算机与电子信息'],
+ ['仿真','计算机与电子信息'],['卫星互联网','计算机与电子信息'],['新媒体技术','计算机与电子信息'],['数据资源','计算机与电子信息'],['数据计算','计算机与电子信息'],
+ ['柔性电子','计算机与电子信息'],['电子封装','计算机与电子信息'],['电子科学','计算机与电子信息'],
+ ['人工智能','计算机与电子信息'],['智能科学','计算机与电子信息'],['计算机','计算机与电子信息'],['软件','计算机与电子信息'],
+ ['网络工程','计算机与电子信息'],['网络安全','计算机与电子信息'],['信息安全','计算机与电子信息'],['物联网','计算机与电子信息'],
+ ['大数据','计算机与电子信息'],['数据科学','计算机与电子信息'],['电子信息','计算机与电子信息'],['通信','计算机与电子信息'],
+ ['信息工程','计算机与电子信息'],['微电子','计算机与电子信息'],['集成电路','计算机与电子信息'],['光电','计算机与电子信息'],
+ ['数字媒体技术','计算机与电子信息'],['虚拟现实','计算机与电子信息'],['区块链','计算机与电子信息'],
+ /* ========== 电气与自动化 ========== */
+ ['智能电网','电气与自动化'],['电网','电气与自动化'],['智能控制','电气与自动化'],['智能感知','电气与自动化'],['电机','电气与自动化'],
+ ['自动化','电气与自动化'],['电气','电气与自动化'],['机器人','电气与自动化'],['测控','电气与自动化'],['轨道交通','电气与自动化'],
+ /* ========== 机械与制造 ========== */
+ ['智能装备','机械与制造'],['工业智能','机械与制造'],['仪器','机械与制造'],['焊接','机械与制造'],['仿生','机械与制造'],
+ ['机械','机械与制造'],['车辆','机械与制造'],['汽车','机械与制造'],['工业设计','机械与制造'],['智能制造','机械与制造'],
+ ['过程装备','机械与制造'],['材料成型','机械与制造'],['增材制造','机械与制造'],
+ /* ========== 土木建筑与水利 ========== */
+ ['智能建造','土木建筑与水利'],['智慧城市','土木建筑与水利'],['市政','土木建筑与水利'],['水文','土木建筑与水利'],['水务','土木建筑与水利'],['地下水','土木建筑与水利'],
+ ['风景园林','土木建筑与水利'],['土木','土木建筑与水利'],['建筑','土木建筑与水利'],['城乡规划','土木建筑与水利'],
+ ['道路','土木建筑与水利'],['桥梁','土木建筑与水利'],['水利','土木建筑与水利'],['水电','土木建筑与水利'],['港口','土木建筑与水利'],
+ ['船舶','土木建筑与水利'],['海洋工程','土木建筑与水利'],['给排水','土木建筑与水利'],['城市地下','土木建筑与水利'],['历史建筑','土木建筑与水利'],['铁道','土木建筑与水利'],
+ /* ========== 化工材料与环境 ========== */
+ ['涂料','化工材料与环境'],['环保','化工材料与环境'],['水质','化工材料与环境'],['水土保持','化工材料与环境'],
+ ['化学','化工材料与环境'],['化工','化工材料与环境'],['材料','化工材料与环境'],['冶金','化工材料与环境'],
+ ['高分子','化工材料与环境'],['环境','化工材料与环境'],['资源循环','化工材料与环境'],['精细化工','化工材料与环境'],
+ /* ========== 能源与动力（海洋油气须先于"海洋"） ========== */
+ ['海洋油气','能源与动力'],['油气储运','能源与动力'],['氢能','能源与动力'],['碳中和','能源与动力'],['碳储','能源与动力'],['煤炭','能源与动力'],
+ ['能源','能源与动力'],['储能','能源与动力'],['核工程','能源与动力'],['石油','能源与动力'],['新能源','能源与动力'],['能源动力','能源与动力'],
+ /* ========== 能源地矿与测绘 ========== */
+ ['矿物','能源地矿与测绘'],['空间信息','能源地矿与测绘'],['地球信息','能源地矿与测绘'],['地球探测','能源地矿与测绘'],['导航','能源地矿与测绘'],
+ ['采矿','能源地矿与测绘'],['矿业','能源地矿与测绘'],['地质','能源地矿与测绘'],['测绘','能源地矿与测绘'],['遥感','能源地矿与测绘'],
+ ['勘查','能源地矿与测绘'],['地理','能源地矿与测绘'],['地球物理','能源地矿与测绘'],['地球化学','能源地矿与测绘'],
+ /* ========== 轻工纺织与食品 ========== */
+ ['服装','轻工纺织与食品'],['染整','轻工纺织与食品'],['酿酒','轻工纺织与食品'],['粮食','轻工纺织与食品'],['乳品','轻工纺织与食品'],
+ ['纺织','轻工纺织与食品'],['轻工','轻工纺织与食品'],['食品','轻工纺织与食品'],['酿造','轻工纺织与食品'],['发酵','轻工纺织与食品'],
+ ['印刷','轻工纺织与食品'],['包装','轻工纺织与食品'],['香料','轻工纺织与食品'],['化妆品','轻工纺织与食品'],
+ /* ========== 交通运输与航空航天（军/工特异词先于交通宽泛词） ========== */
+ ['无人机系统应用','交通运输与航空航天'],['低空','交通运输与航空航天'],['邮政','交通运输与航空航天'],
+ ['航空','交通运输与航空航天'],['航天','交通运输与航空航天'],['飞行','交通运输与航空航天'],['交通','交通运输与航空航天'],
+ ['运输','交通运输与航空航天'],['航海','交通运输与航空航天'],['轮机','交通运输与航空航天'],['邮轮','交通运输与航空航天'],
+ /* ========== 安全科学与应急（新设；信息/网络安全已在前面截走） ========== */
+ ['安全生产','安全科学与应急'],['应急','安全科学与应急'],['防灾','安全科学与应急'],['辐射防护','安全科学与应急'],['安全','安全科学与应急'],
+ /* ========== 数理与统计 ========== */
+ ['量子','数理与统计'],['声学','数理与统计'],['行星','数理与统计'],['数理','数理与统计'],
+ ['数学','数理与统计'],['物理','数理与统计'],['天文','数理与统计'],['力学','数理与统计'],['统计','数理与统计'],
+ ['大数据管理','数理与统计'],['计算科学','数理与统计'],['系统科学','数理与统计'],
+ /* ========== 生物与生态 ========== */
+ ['生物','生物与生态'],['生态','生物与生态'],
+ /* ========== 大气与海洋科学（新设；渔业/海洋油气已在前面截走） ========== */
+ ['水声','大气与海洋科学'],['大气','大气与海洋科学'],['气象','大气与海洋科学'],['海洋','大气与海洋科学'],
+ /* ========== 种植与园艺 ========== */
+ ['智慧农业','种植与园艺'],['智能化农业','种植与园艺'],['农业智能','种植与园艺'],['农林智能','种植与园艺'],['设施农业','种植与园艺'],
+ ['农业装备','种植与园艺'],['农业工程','种植与园艺'],['现代种业','种植与园艺'],['种业','种植与园艺'],['种子','种植与园艺'],
+ ['植保','种植与园艺'],['植物','种植与园艺'],['农学','种植与园艺'],['农艺','种植与园艺'],['园艺','种植与园艺'],
+ ['烟草','种植与园艺'],['茶学','种植与园艺'],['蚕学','种植与园艺'],['菌物','种植与园艺'],['食用菌','种植与园艺'],
+ ['中草药','种植与园艺'],['葡萄','种植与园艺'],['土地整治','种植与园艺'],['土地科学','种植与园艺'],
+ ['乡村','种植与园艺'],['农村区域','种植与园艺'],
+ /* ========== 动物与水产 ========== */
+ ['智慧牧业','动物与水产'],['现代畜牧','动物与水产'],['畜牧','动物与水产'],['动物科学','动物与水产'],['动物生产','动物与水产'],
+ ['动物医学','动物与水产'],['动植物检疫','动物与水产'],['实验动物','动物与水产'],['兽医','动物与水产'],['马业','动物与水产'],
+ ['蜂学','动物与水产'],['饲料','动物与水产'],['养殖','动物与水产'],['水产','动物与水产'],['水族','动物与水产'],
+ ['宠物','动物与水产'],['渔业','动物与水产'],
+ /* ========== 林学与草业 ========== */
+ ['智慧林业','林学与草业'],['智慧景观','林学与草业'],['林学','林学与草业'],['森林','林学与草业'],['林业','林学与草业'],
+ ['木材','林学与草业'],['草业','林学与草业'],['草坪','林学与草业'],['园林','林学与草业'],
+ /* ========== 临床与口腔医学（"医学"兜底词置于医学段末尾） ========== */
+ ['口腔医学技术','医学技术类'],['眼视光技术','医学技术类'],['眼视光学','医学技术类'],['影像技术','医学技术类'],
+ ['智能影像','医学技术类'],['医学影像','临床与口腔医学'],['眼视光','临床与口腔医学'],['口腔','临床与口腔医学'],
+ ['儿科','临床与口腔医学'],['麻醉','临床与口腔医学'],['精神','临床与口腔医学'],['放射医学','公共卫生与预防'],
+ ['临床','临床与口腔医学'],
+ /* ========== 医学技术类 ========== */
+ ['检验','医学技术类'],['康复','医学技术类'],['听力学','医学技术类'],['假肢','医学技术类'],['呼吸治疗','医学技术类'],
+ /* ========== 公共卫生与预防 ========== */
+ ['妇幼保健','公共卫生与预防'],['全球健康','公共卫生与预防'],['预防','公共卫生与预防'],['公共卫生','公共卫生与预防'],
+ ['卫生','公共卫生与预防'],['健康','公共卫生与预防'],
+ /* ========== 中医药类 ========== */
+ ['针灸','中医药类'],['推拿','中医药类'],['中西医','中医药类'],['蒙医','中医药类'],['蒙药','中医药类'],['藏医','中医药类'],
+ ['中医','中医药类'],['中药','中医药类'],
+ /* ========== 药学类 ========== */
+ ['临床药学','药学类'],['药学','药学类'],['药物','药学类'],['制药','药学类'],
+ /* ========== 护理学 ========== */
+ ['护理','护理学'],['助产','护理学'],
+ /* ========== 基础与法医学 ========== */
+ ['基础医学','基础与法医学'],['法医学','基础与法医学'],['法医','基础与法医学'],
+ ['医学','临床与口腔医学'],
+ /* ========== 经管·特异前置（防"经济/管理"等宽泛词截走） ========== */
+ ['国际经济与贸易','经济与贸易'],['会展','旅游与会展'],['体育经济','工商管理类'],
+ /* ========== 经济学类 ========== */
+ ['数字经济','经济学类'],['劳动经济','经济学类'],['国民经济','经济学类'],['商务经济','经济学类'],['经济','经济学类'],
+ /* ========== 金融学类 ========== */
+ ['精算','金融学类'],['保险','金融学类'],['投资','金融学类'],['信用','金融学类'],['金融','金融学类'],
+ /* ========== 财政与税收 ========== */
+ ['财政','财政与税收'],['税收','财政与税收'],['税务','财政与税收'],
+ /* ========== 经济与贸易 ========== */
+ ['贸易','经济与贸易'],
+ /* ========== 工商管理类 ========== */
+ ['工商管理','工商管理类'],['市场营销','工商管理类'],['会计','工商管理类'],['财务','工商管理类'],['审计','工商管理类'],
+ ['国际商务','工商管理类'],['人力资源','工商管理类'],['资产评估','工商管理类'],['文化产业','工商管理类'],
+ ['劳动关系','工商管理类'],['零售','工商管理类'],
+ /* ========== 管理科学与工程 ========== */
+ ['工程管理','管理科学与工程'],['造价','管理科学与工程'],['信息管理','管理科学与工程'],['房地产开发','管理科学与工程'],
+ ['工业工程','管理科学与工程'],['管理科学','管理科学与工程'],
+ /* ========== 公共管理类 ========== */
+ ['公共事业','公共管理类'],['公共管理','公共管理类'],['行政管理','公共管理类'],['劳动与社会保障','公共管理类'],
+ ['土地资源','公共管理类'],['城市管理','公共管理类'],['公共关系','公共管理类'],['数字公共治理','公共管理类'],
+ /* ========== 物流与电商 ========== */
+ ['物流','物流与电商'],['采购','物流与电商'],['供应链','物流与电商'],['电子商务','物流与电商'],
+ /* ========== 旅游与会展 ========== */
+ ['文旅','旅游与会展'],['旅游','旅游与会展'],['酒店','旅游与会展'],
+ /* ========== 图书档案 ========== */
+ ['图书馆','图书档案'],['档案','图书档案'],['信息资源管理','图书档案'],
+ /* 兜底：其余"××管理"归入工商管理类 */
+ ['管理','工商管理类'],
+ /* ========== 法律与知识产权 ========== */
+ ['纪检监察','法律与知识产权'],['知识产权','法律与知识产权'],['社区矫正','法律与知识产权'],['监狱','法律与知识产权'],
+ ['司法','法律与知识产权'],['国际法','法律与知识产权'],['经贸规则','法律与知识产权'],
+ ['法学','法律与知识产权'],['法律','法律与知识产权'],
+ /* ========== 公安与警务 ========== */
+ ['涉外','公安与警务'],['警犬','公安与警务'],['禁毒','公安与警务'],['边防','公安与警务'],['海警','公安与警务'],
+ ['消防','公安与警务'],['抢险','公安与警务'],['治安','公安与警务'],['侦查','公安与警务'],['刑事','公安与警务'],
+ ['犯罪','公安与警务'],['警务','公安与警务'],['公安','公安与警务'],['警察','公安与警务'],['海关','公安与警务'],
+ /* ========== 政治学与马克思主义 ========== */
+ ['区域国别','政治学与马克思主义'],['国际事务','政治学与马克思主义'],['国际组织','政治学与马克思主义'],
+ ['国家安全','政治学与马克思主义'],['国际政治','政治学与马克思主义'],['马克思主义','政治学与马克思主义'],
+ ['思政','政治学与马克思主义'],['政治','政治学与马克思主义'],['外交','政治学与马克思主义'],
+ /* ========== 社会学与民族 ========== */
+ ['社会工作','社会学与民族'],['社会学','社会学与民族'],['民族学','社会学与民族'],['家政','社会学与民族'],['人类学','社会学与民族'],
+ /* ========== 体育学类（须先于"教育"，如"体育教育"归体育） ========== */
+ ['体育','体育学类'],['运动','体育学类'],['武术','体育学类'],
+ /* ========== 心理学类 ========== */
+ ['心理','心理学类'],
+ /* ========== 教育学类 ========== */
+ ['教育','教育学类'],['师范','教育学类'],['学前','教育学类'],
+ /* ========== 中国语言文学 ========== */
+ ['古典学','中国语言文学'],['古典文献','中国语言文学'],['中国语言','中国语言文学'],['少数民族语言','中国语言文学'],
+ ['蒙古语','中国语言文学'],['语言学','中国语言文学'],['语言科学','中国语言文学'],['数字人文','中国语言文学'],
+ ['应用语言','中国语言文学'],['汉语言','中国语言文学'],['汉语','中国语言文学'],['中文','中国语言文学'],
+ ['秘书','中国语言文学'],['文学','中国语言文学'],
+ /* ========== 新闻传播 ========== */
+ ['新媒体','新闻传播'],['新闻','新闻传播'],['传播','新闻传播'],['广告','新闻传播'],['编辑','新闻传播'],['出版','新闻传播'],
+ /* ========== 外国语言（常见小语种 + 末尾兜底"语"） ========== */
+ ['英语','外国语言'],['日语','外国语言'],['俄语','外国语言'],['法语','外国语言'],['德语','外国语言'],['西班牙','外国语言'],
+ ['阿拉伯','外国语言'],['朝鲜语','外国语言'],['意大利','外国语言'],['葡萄牙','外国语言'],['翻译','外国语言'],
+ ['外国语言','外国语言'],['商务英语','外国语言'],['乌克兰语','外国语言'],['保加利亚语','外国语言'],['印地语','外国语言'],
+ ['印度尼西亚语','外国语言'],['哈萨克语','外国语言'],['土耳其语','外国语言'],['尼泊尔语','外国语言'],['波斯语','外国语言'],
+ ['泰语','外国语言'],['白俄罗斯语','外国语言'],['罗马尼亚语','外国语言'],['老挝语','外国语言'],['越南语','外国语言'],
+ ['马来语','外国语言'],['豪萨语','外国语言'],['斯瓦希里语','外国语言'],['波兰语','外国语言'],['捷克语','外国语言'],
+ ['瑞典语','外国语言'],['希腊语','外国语言'],['荷兰语','外国语言'],['芬兰语','外国语言'],['丹麦语','外国语言'],
+ ['希伯来语','外国语言'],['乌尔都语','外国语言'],['僧伽罗语','外国语言'],['菲律宾语','外国语言'],['缅甸语','外国语言'],
+ ['柬埔寨语','外国语言'],['韩语','外国语言'],['语','外国语言'],
+ /* ========== 音乐与舞蹈 ========== */
+ ['音乐','音乐与舞蹈'],['舞蹈','音乐与舞蹈'],['作曲','音乐与舞蹈'],
+ /* ========== 戏剧与影视 ========== */
+ ['表演','戏剧与影视'],['戏剧','戏剧与影视'],['影视','戏剧与影视'],['电影','戏剧与影视'],['播音','戏剧与影视'],
+ ['动画','戏剧与影视'],['录音','戏剧与影视'],['广播电视','戏剧与影视'],
+ /* ========== 美术与设计 ========== */
+ ['数字媒体艺术','美术与设计'],['美术','美术与设计'],['绘画','美术与设计'],['雕塑','美术与设计'],['摄影','美术与设计'],
+ ['书法','美术与设计'],['设计','美术与设计'],
+ /* ========== 艺术理论与管理 ========== */
+ ['艺术史论','艺术理论与管理'],['艺术管理','艺术理论与管理'],['艺术','美术与设计'],
+ /* ========== 哲学类 ========== */
+ ['哲学','哲学类'],['逻辑','哲学类'],['宗教学','哲学类'],['伦理','哲学类'],
+ /* ========== 历史与文博 ========== */
+ ['文化遗产','历史与文博'],['非物质文化遗产','历史与文博'],['世界史','历史与文博'],
+ ['历史','历史与文博'],['考古','历史与文博'],['文物','历史与文博'],['古文字','历史与文博'],
+ /* ========== 军事与国防（特异词集中前置，避免误入交通/机械） ========== */
+ ['反无人','军事与国防'],['无人系统指挥','军事与国防'],['智能无人','军事与国防'],['无人装备','军事与国防'],
+ ['作战','军事与国防'],['侦察','军事与国防'],['伪装','军事与国防'],['军需','军事与国防'],['导弹','军事与国防'],['地雷','军事与国防'],
+ ['弹药','军事与国防'],['指挥信息','军事与国防'],['火力','军事与国防'],['空天','军事与国防'],['网电','军事与国防'],
+ ['雷达','军事与国防'],['预警','军事与国防'],['任务规划','军事与国防'],['装备保障','军事与国防'],['装备试验','军事与国防'],
+ ['目标保障','军事与国防'],['控制与领航','军事与国防'],['数据链','军事与国防'],['探测制导','军事与国防'],
+ ['电磁','军事与国防'],['兵器','军事与国防'],
+ ['军事','军事与国防'],['国防','军事与国防'],['武器','军事与国防'],
+ /* ========== 综合：试验班/大类招生/预科/奖学金/以学院为名的招生单位 ========== */
+ ['试验班','综合试验班与预科'],['预科','综合试验班与预科'],['奖学金','综合试验班与预科'],['学院','综合试验班与预科'],
+ ['人文类','综合试验班与预科'],['商科类','综合试验班与预科'],['工科类','综合试验班与预科'],['理科类','综合试验班与预科']
+];
+/* 门类（一级）→ 专业大类（二级）。三级为具体专业名，由数据动态聚合 */
+const MAJOR_GATES=[
+ ['工学',['计算机与电子信息','电气与自动化','机械与制造','土木建筑与水利','化工材料与环境','能源与动力','能源地矿与测绘','轻工纺织与食品','交通运输与航空航天','安全科学与应急']],
+ ['理学',['数理与统计','生物与生态','大气与海洋科学']],
+ ['农学',['种植与园艺','动物与水产','林学与草业']],
+ ['医学',['临床与口腔医学','公共卫生与预防','中医药类','药学类','护理学','医学技术类','基础与法医学']],
+ ['经管',['经济学类','金融学类','财政与税收','经济与贸易','工商管理类','管理科学与工程','公共管理类','物流与电商','旅游与会展','图书档案']],
+ ['法学',['法律与知识产权','公安与警务','政治学与马克思主义','社会学与民族']],
+ ['教育学',['教育学类','体育学类','心理学类']],
+ ['文学',['中国语言文学','新闻传播','外国语言']],
+ ['艺术学',['音乐与舞蹈','戏剧与影视','美术与设计','艺术理论与管理']],
+ ['历史与哲学',['哲学类','历史与文博']],
+ ['军事学',['军事与国防']],
+ ['综合',['综合试验班与预科','其他（无法归入常规大类）']]
+];
+const GATE_OF={};MAJOR_GATES.forEach(([g,cs])=>cs.forEach(c=>GATE_OF[c]=g));
+function majorGate(cat){return GATE_OF[cat]||'综合';}
+/* majorCat：按关键词匹配返回专业大类；匹不中的归入"其他（无法归入常规大类）"而非笼统"其他专业" */
+function majorCat(zm){
+  const s=zm||'';
+  for(const [k,v] of MAJOR_KW)if(s.includes(k))return v;
+  return '其他（无法归入常规大类）';
+}
+/* 录取概率估算：基于位次比 k=R/R0 的分段线性插值（模型估计，仅供参考） */
+const PROB_ANCHORS=[[0.3,1],[0.4,2],[0.5,5],[0.6,10],[0.7,20],[0.8,32],[0.85,42],[0.9,52],[0.95,60],[1.0,68],[1.05,76],[1.1,82],[1.15,87],[1.2,90],[1.3,94],[1.5,97],[2.0,99],[99,99]];
+function probOf(k){
+  if(k==null||!isFinite(k)||k<=0)return null;
+  if(k<=PROB_ANCHORS[0][0])return PROB_ANCHORS[0][1];
+  for(let i=1;i<PROB_ANCHORS.length;i++){
+    if(k<=PROB_ANCHORS[i][0]){
+      const [a,b]=PROB_ANCHORS[i-1],[c,d]=PROB_ANCHORS[i];
+      return Math.round(b+(k-a)/(c-a)*(d-b));
+    }
+  }
+  return 99;
+}
+function probBadge(k){
+  const p=probOf(k);if(p==null)return '';
+  const c=p<35?'p-low':p<65?'p-mid':'p-high';
+  return `<span class="badge ${c}" title="按位次比 k=${(k||0).toFixed(2)} 估算，仅供参考">概率≈${p}%</span>`;
+}
+/* ---- 院校元数据（掌上高考公开接口，永久本地缓存；失败/查无此名则不出标签，绝不编造） ---- */
+const Meta={
+  KEY:'meta:v2',
+  cache:LS.get('meta:v2',{})||{},
+  inflight:{},
+  norm(n){return String(n||'').replace(/\s+/g,'').replace(/[（(【\[].*$/,'').trim();},
+  async dyn(name){
+    const k=this.norm(name);
+    if(k in this.cache)return this.cache[k];
+    if(this.inflight[k])return this.inflight[k];
+    this.inflight[k]=this._fetch(name)
+      .then(v=>{this.cache[k]=v;LS.set(this.KEY,this.cache);delete this.inflight[k];return v;})
+      .catch(()=>{delete this.inflight[k];return null;}); // 网络失败不缓存，下次重试
+    return this.inflight[k];
+  },
+  async _fetch(name){
+    // 列表接口字段：school_id/name/city_name/nature_name/type_name；详情接口：school_nature/num_master/num_doctor
+    const q=await Net.json('https://api.zjzw.cn/web/api/?keyword='+encodeURIComponent(name)+'&page=1&size=10&uri=apidata/api/gk/school/lists',{timeout:15000,label:'meta-search'});
+    const items=(q&&q.data&&q.data.item)||[];
+    const nn=this.norm(name);
+    const hit=items.find(s=>this.norm(s.name)===nn); // 仅认全名一致，防止张冠李戴
+    if(!hit)return null;
+    const id=hit.school_id||hit.id;
+    if(!id)return null;
+    let d={};
+    try{
+      const r=await Net.json('https://static-data.gaokao.cn/www/2.0/school/'+id+'/info.json',{timeout:15000,label:'meta-info'});
+      d=(r&&r.data)||{};
+    }catch(e){d={};}
+    return {
+      city:hit.city_name||d.city_name||'',
+      nature:hit.nature_name||d.school_nature||d.nature_name||'',
+      type:hit.type_name||d.type_name||'',
+      master:+(d.num_master||d.is_master)||0,
+      phd:+(d.num_doctor||d.is_phd)||0
+    };
+  }
+};
+/* 卡片标签：静态荣誉标签立即渲染，动态标签（城市/公办民办/硕士点/博士点）异步补齐 */
+function schoolTagsHTML(name,it){
+  const b=honorsOf(name);
+  let h='';
+  if(b.f985)h+='<span class="tag tg-985">985</span>';
+  if(b.f211)h+='<span class="tag tg-211">211</span>';
+  if(b.dual)h+='<span class="tag tg-dl">双一流</span>';
+  if(b.by)h+='<span class="tag tg-by" title="具有硕士研究生推免资格">可保研</span>';
+  const xz=String((it&&it.xz)||'');
+  if(/民办/.test(xz))h+='<span class="tag tg-min">民办</span>';
+  else if(/公办/.test(xz))h+='<span class="tag tg-gong">公办</span>';
+  return h;
+}
+let _metaEpoch=0;
+async function hydrateMeta(){
+  const ep=++_metaEpoch;
+  const cards=[...document.querySelectorAll('#rs-list .school-card[data-yx]')];
+  const names=[...new Set(cards.map(c=>c.dataset.yx))];
+  for(let i=0;i<names.length;i+=4){ // 小批量并发，避免瞬时打满代理
+    if(ep!==_metaEpoch)return;
+    await Promise.all(names.slice(i,i+4).map(async n=>{
+      const d=await Meta.dyn(n);
+      if(!d||ep!==_metaEpoch)return;
+      document.querySelectorAll(`#rs-list .school-card[data-yx="${CSS.escape(n)}"]`).forEach(card=>{
+        if(card.dataset.dyn==='1')return;
+        card.dataset.dyn='1';
+        const box=card.querySelector('.sc-tags');if(!box)return;
+        let x='';
+        if(d.city)x+=`<span class="tag tg-line">${esc(d.city)}</span>`;
+        if(d.type)x+=`<span class="tag tg-line">${esc(d.type)}</span>`;
+        if(d.nature)x+=`<span class="tag ${/民办|独立/.test(d.nature)?'tg-min':'tg-gong'}">${esc(d.nature)}</span>`;
+        if(d.master)x+='<span class="tag tg-ss">有硕士点</span>';
+        if(d.phd)x+='<span class="tag tg-bs">有博士点</span>';
+        if(x)box.insertAdjacentHTML('beforeend',x);
+      });
+    }));
+  }
+}
+/* 七档配额：以"稳"为中心的梯度权重——适中最多、稳妥次之、保/大保依次减少，大冲/冲/冒险最少。
+   权重 大冲1 冲1.5 冒险2 适中6 稳妥5 保4 大保3；按最大余数法取整，某档候选不足时把名额让给距 k=1 最近的档 */
+function quotaSlice(items,N){
+  if(!N||N>=items.length)return items;
+  // 七档权重：适中最多(6)→稳妥次之(5)→保(4)→大保(3)→冒险(2)→冲(1.5)→大冲(1)
+  // 体现"以稳为主"原则：大部分名额给位次相当或低于考生的院校，冲档精简避免脱档
+  const W={1:1,2:1.5,3:2,4:6,5:5,6:4,7:3};
+  const sumW=22.5;
+  const byT={};
+  for(const it of items){(byT[it.tier.id]=byT[it.tier.id]||[]).push(it);}
+  for(const t in byT)byT[t].sort((a,b)=>Math.abs(a.k-1)-Math.abs(b.k-1));
+  const q={1:0,2:0,3:0,4:0,5:0,6:0,7:0};
+  const fr=[];
+  for(let t=1;t<=7;t++){
+    const v=N*W[t]/sumW;q[t]=Math.floor(v);
+    fr.push({t,r:v-q[t]});
+  }
+  let left=N-Object.values(q).reduce((a,b)=>a+b,0);
+  fr.sort((a,b)=>b.r-a.r);
+  for(const f of fr){if(left<=0)break;q[f.t]++;left--;}
+  // 候选不足的档：按其实际数量截断，缺额优先补到 k≈1 的档（适中→稳妥→冒险→保→冲→大保→大冲）
+  for(let t=1;t<=7;t++)if(byT[t])q[t]=Math.min(q[t],byT[t].length);
+  const fillOrder=[4,5,3,6,2,7,1];
+  let need=N-fillOrder.reduce((s,t)=>s+q[t],0);
+  let guard=0;
+  while(need>0&&guard++<N){
+    const t=fillOrder.find(t=>byT[t]&&q[t]<byT[t].length);
+    if(!t)break;
+    q[t]++;need--;
+  }
+  const out=[];
+  for(let t=1;t<=7;t++)if(byT[t])out.push(...byT[t].slice(0,q[t]));
+  return out.sort((a,b)=>a.tier.id-b.tier.id||Math.abs(a.k-1)-Math.abs(b.k-1));
+}
+function renderResultList(append){
+  const r=State.result,inp=State.input;if(!r)return;
+  let list=inp.limit?State.plan:State.poolAll;
+  // 按院校专业组级档位筛选：点档位chip只看该档位的院校卡片
+  if(State.filterTier)list=list.filter(i=>i.tier.id===State.filterTier);
+  const sort=$('#f-sort')?$('#f-sort').value:'k';
+  list=[...list].sort((a,b)=>sort==='k'?a.k-b.k:sort==='rank'?a.gRank-b.gRank:a.yx.localeCompare(b.yx,'zh'));
+  $('#rs-filterinfo').textContent=inp.limit
+    ?`本方案 ${State.plan.length} 个志愿（设定 ${inp.limit}，按"稳为主"梯度分配：适中最多、稳妥次之，冲/冒险精简，兼顾不浪费分数与防脱档）${State.foldN?` · 已折叠 ${State.foldN} 个低参考价值候选`:''} · 点档位卡片可单看该档`
+    :`全部 ${fmtN(State.poolN)} 个院校专业组 · k=推荐位次/考生位次`;
+  // 分页（限数模式一次全部显示；"全部"模式分页浏览）
+  if(!append)State.shown=inp.limit?list.length:Math.min(120,list.length);
+  const slice=list.slice(0,State.shown);
+  $('#rs-more').style.display=list.length>State.shown?'':'none';
+  $('#rs-list').innerHTML=slice.length?slice.map((it,i)=>cardHTML(it,i,inp)).join(''):'<div class="card empty-tip">该条件下暂无志愿：可在结果页上方改关键词，或<a href="#/">返回首页调整筛选偏好</a></div>';
+  hydrateMeta(); // 异步补齐城市/公办民办/硕士点/博士点标签
+}
+
+/* ---- 志愿表（按考生独立收藏 / 导出，文件名与内容均含考生姓名） ---- */
+function saveWish(){if(Stu.data){Stu.data.wish=State.wish;Stu.save();}}
+function toggleWish(key){
+  if(!Stu.data){toast('请先在首页输入考生姓名');return;}
+  const i=State.wish.findIndex(w=>w.key===key);
+  if(i>=0){State.wish.splice(i,1);}
+  else{
+    const it=[...State.plan,...State.poolAll].find(x=>x.dh+'|'+x.g===key);
+    if(!it)return;
+    if(State.input.limit&&State.wish.length>=State.input.limit){toast(`志愿表已达方案上限 ${State.input.limit} 个，请先移除再添加`);return;}
+    State.wish.push({key,dh:it.dh,g:it.g,yx:it.yx,tName:it.tier.name,tCls:it.tier.cls,
+      k:it.k,prob:probOf(it.k),gRank:it.gRank,
+      min:it.byYear[0]?it.byYear[0].min:null,y:it.byYear[0]?it.byYear[0].year:null,cat:State.input.cat});
+  }
+  saveWish();
+  syncWishBtns();renderWishBar();renderWishModal();renderStuCur();
+}
+function syncWishBtns(){
+  $$('#rs-list .wish-btn').forEach(b=>{
+    const on=State.wish.some(w=>w.key===b.dataset.wish);
+    b.classList.toggle('on',on);b.textContent=on?'✓ 已选':'+ 志愿表';
+  });
+}
+function renderWishBar(){
+  const el=$('#wish-bar');if(!el)return;
+  $('#wish-n').textContent=State.wish.length;
+  $('#wish-stu').textContent=Stu.data?Stu.data.name+' ·':'';
+  el.style.display=State.wish.length?'':'none';
+}
+function openWishModal(){renderWishModal();$('#wish-modal').style.display='';$('#wish-mask').style.display='';}
+function closeWishModal(){$('#wish-modal').style.display='none';$('#wish-mask').style.display='none';}
+function renderWishModal(){
+  const el=$('#wish-body');if(!el)return;
+  $('#wish-title-name').textContent=Stu.data?'（'+Stu.data.name+'）':'';
+  if(!State.wish.length){el.innerHTML='<div class="wish-empty">志愿表为空——在推荐结果卡片上点「+ 志愿表」收藏</div>';return;}
+  const sorted=[...State.wish].sort((a,b)=>TIERS.findIndex(t=>t.name===a.tName)-TIERS.findIndex(t=>t.name===b.tName));
+  el.innerHTML=sorted.map((w,i)=>`<div class="wish-row"><span class="idx">${i+1}</span><span class="badge ${w.tCls||'t4'}">${esc(w.tName)}</span><a class="sc-name" href="#/school/${esc(w.dh)}" onclick="closeWishModal()">${esc(w.yx)}</a><span class="muted">组 <span class="cd">${esc(w.g)}</span> · k=${w.k?w.k.toFixed(2):'—'} · 概率≈${w.prob==null?'—':w.prob+'%'} · 组最低 ${w.min==null?'—':w.min+'分'}（${w.y||'—'}）· 位次 ${fmtN(w.gRank)}</span><button class="del" data-del="${esc(w.key)}">移除</button></div>`).join('');
+  $$('#wish-body .del').forEach(b=>b.onclick=()=>toggleWish(b.dataset.del));
+}
+function wishFileName(ext){
+  const d=new Date(),ds=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+  return `志愿表_${Stu.data?Stu.data.name:'考生'}_${ds}.${ext}`;
+}
+function wishCSV(){
+  if(!State.wish.length){toast('志愿表为空');return;}
+  const name=Stu.data?Stu.data.name:'';
+  const head='考生姓名,序号,院校代号,院校名称,专业组代号,科类,档位,录取概率,组最低分,对应年份,推荐位次';
+  const rows=State.wish.map((w,i)=>[name,i+1,w.dh,w.yx,w.g,w.cat||'',w.tName,w.prob==null?'':w.prob+'%',w.min==null?'':w.min,w.y||'',w.gRank]
+    .map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(','));
+  const csv='\ufeff'+head+'\n'+rows.join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=wishFileName('csv');document.body.appendChild(a);a.click();a.remove();
+  toast(`已导出 ${a.download}（可用 Excel/WPS 打开）`);
+}
+function wishCopy(){
+  if(!State.wish.length){toast('志愿表为空');return;}
+  const name=Stu.data?Stu.data.name:'';
+  const head=['考生姓名','序号','院校代号','院校名称','专业组代号','科类','档位','录取概率','组最低分','对应年份','推荐位次'].join('\t');
+  const rows=State.wish.map((w,i)=>[name,i+1,w.dh,w.yx,w.g,w.cat||'',w.tName,w.prob==null?'':w.prob+'%',w.min==null?'':w.min,w.y||'',w.gRank].join('\t'));
+  const txt=head+'\n'+rows.join('\n');
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>toast('已复制到剪贴板（含考生姓名），可粘贴到 Excel/微信'),()=>toast('复制失败，请用导出 CSV'));}
+  else toast('当前环境不支持复制，请用导出 CSV');
+}
+const MZ_CAP=12; // 每卡默认展示的专业数，其余折叠
+function majorRow(m,it,yrs){
+  // 固定显示考生届别之前的近三年（如2026届看2025/2024/2023），某年不招生标"未招生"
+  const yrs3=yrs&&yrs.length?yrs:[2025,2024,2023];
+  const ymap=new Map((m.byYear||[]).map(y=>[y.year,y]));
+  const cells=yrs3.map((y,i)=>{
+    const d=ymap.get(y);
+    if(d&&d.min>0){
+      const col=i===0?'style="background:#f0f7f0"':i===1?'style="background:#f0f3f7"':'style="background:#f7f0f0"';
+      return `<td ${col}><b>${d.min}</b><br><span class="muted" style="font-size:11.5px">位次 ${fmtN(d.rank)}</span><br><span class="muted" style="font-size:11.5px">${d.n==null?'人数未公布':d.n+' 人'}</span></td>`;
+    }
+    return `<td style="background:#f5f5f5;color:#aaa"><span style="font-size:11.5px">— 未招生 —</span></td>`;
+  }).join('');
+  // 专业代码：录取数据缺失时从招生计划按校+组+专业名补全
+  let zd=m.zd;
+  if(!zd){const pn=Store.planByName(State.result.years[0],it.dh,it.g,m.zm);if(pn)zd=pn.zd;}
+  const pl=Store.planOf(State.result.years[0],it.dh,it.g,zd)||Store.planByName(State.result.years[0],it.dh,it.g,m.zm);
+  const plTxt=pl?`${pl.xf?esc(pl.xf)+'元/年':''}${pl.nx?' · '+esc(pl.nx)+'年制':''}${pl.dd?' · '+esc(pl.dd):''}${pl.plan?' · 计划'+pl.plan+'人':''}`:'';
+  return `<tr>
+    <td class="cd">${esc(zd||'—')}</td>
+    <td><b>${esc(m.zm)}</b>${plTxt?'<br><span class="muted" style="font-size:12px">'+plTxt+'</span>':''}</td>
+    ${cells}
+  </tr>`;
+}
+function cardHTML(it,idx,inp){
+  const sc=Store.schoolOf(State.result.years[0],it.dh,inp.cat)||Store.schoolOf(State.result.years[0],it.dh,'');
+  const zszc=sc&&sc.zszc?sc.zszc:'';
+  const info=schoolInfo(it.yx);
+  const cvTxt=it.cv>0.3?`<span class="fluct">波动大小年风险（变异系数 ${(it.cv*100).toFixed(0)}%）</span>`:'';
+  // 只展示有档位的专业（有位次数据、能与考生比对）；卡片内专业再按7档分组展示，空档位不显示
+  const tieredMajors=it.majors.filter(m=>m.tier);
+  // 参考年份=考生届别之前的近三年（2026届→2025/2024/2023），由算法按实际可用数据给出
+  const yrs3=State.result.years.slice(0,3);
+  // 按专业档位分组：TIERS 顺序即档位顺序（大冲→大保），每组内按 k 值升序
+  const groups=TIERS.map(t=>({tier:t,majors:tieredMajors.filter(m=>m.tier.id===t.id)})).filter(g=>g.majors.length);
+  groups.forEach(g=>g.majors.sort((a,b)=>(a.k||1)-(b.k||1)));
+  const rows=groups.map(g=>`<tr class="tier-group-head"><td colspan="${2+yrs3.length}">${tierBadge(g.tier)} <span class="muted" style="font-size:12px">该档位 ${g.majors.length} 个专业可选</span></td></tr>`+g.majors.map(m=>majorRow(m,it,yrs3)).join('')).join('');
+  // 近三年彩色数据带：位于卡片中部；缺数据年份空标"未招生/未公布"
+  const ymap=new Map(it.byYear.map(y=>[y.year,y]));
+  const yrCards=yrs3.map((y,i)=>{
+    const d=ymap.get(y);
+    if(d&&d.min>0)return `<div class="yr-card y${i+1}"><div class="yy">${y} 年</div><div class="ss">${d.min}<span style="font-size:13px;font-weight:600"> 分</span></div><div class="rr">最低位次 ${fmtN(d.rank)}</div><div class="nn">组最高 ${d.max||'—'} · ${d.n==null?'人数未公布':'录取 '+d.n+' 人'}</div></div>`;
+    return `<div class="yr-card na"><div class="yy">${y} 年</div><div class="ss">— 未招生 —</div><div class="rr">该年无录取数据</div><div class="nn">（未在内蒙古招生或官网未公布）</div></div>`;
+  }).join('');
+  // 计划详情（学费等）取组内任一专业的计划
+  // 阳光高考：章程链接含 schId 时可构造院校库（官网/院校信息）链接
+  // 卡片标题用院校专业组级档位（it.tier）；卡片内专业按各自档位分组展示
+  const cardTier=it.tier;
+  const cardK=it.k;
+  const schId=(/schId-(\d+)/.exec(zszc||'')||[])[1];
+  const wkey=it.dh+'|'+it.g;
+  const wished=State.wish.some(w=>w.key===wkey);
+  return `<div class="school-card" data-yx="${esc(it.yx)}">
+    <div class="sc-head">
+      <div class="sc-title">
+        <div>
+          <a class="sc-name" href="#/school/${esc(it.dh)}">${idx+1}. ${esc(it.yx)}</a> <span class="muted">院校代号 <span class="cd">${esc(it.dh)}</span></span>
+          ${tierBadge(cardTier)} ${byrBadge(it.yx)} ${probBadge(cardK)}
+          <button class="wish-btn${wished?' on':''}" data-wish="${esc(wkey)}" title="收藏到志愿表（保存在本机，可导出）">${wished?'✓ 已选':'+ 志愿表'}</button>
+        </div>
+        <div class="muted">k = ${cardK.toFixed(2)} · 推荐位次 ${fmtN(it.gRank)} vs 考生 ${fmtN(inp.rank0)}${groups.length>1?' · 卡片内专业分 '+groups.length+' 档':''}</div>
+        <div class="sc-tags">${schoolTagsHTML(it.yx,it)}</div>
+      </div>
+      <div class="sc-meta">
+        <span>专业组代号 <span class="cd">${esc(it.g)}</span></span><span>${esc(it.kl||inp.cat)}${it.klmc&&it.klmc!==it.kl?'（'+esc(it.klmc)+'）':''}</span>
+        <span>${esc(it.lb)}</span><span>${esc(it.xz)}</span>
+        <span>${info.region}</span><span>${info.type}</span>
+        ${zszc?`<a href="${esc(zszc)}" target="_blank" rel="noopener">招生章程</a>`:`<a href="https://gaokao.chsi.com.cn/zsgs/zhangcheng/" target="_blank" rel="noopener">招生章程（阳光高考查）</a>`}
+        ${schId?`<a href="https://gaokao.chsi.com.cn/sch/schoolInfo--schId-${schId}.dhtml" target="_blank" rel="noopener">院校官网/信息</a>`
+               :`<a href="https://www.bing.com/search?q=${encodeURIComponent(it.yx+' 本科招生官网')}" target="_blank" rel="noopener">搜索官网</a>`}
+        <a href="${ROOT}/kszs/ptgk/xxcx/" target="_blank" rel="noopener">官方数据</a>
+      </div>
+    </div>
+    <div style="padding:12px 18px 2px;font-weight:700;font-size:14.5px;color:var(--text-primary)">近三年录取数据（${yrs3.join(' / ')} 参考年 · 专业组最低分 / 位次 / 人数）</div>
+    <div class="yr-band">${yrCards}</div>
+    <div class="yr-summary">组最高分（${it.byYear[0]?it.byYear[0].year:'最新年'}）：${it.byYear[0]?'<b>'+it.byYear[0].max+'</b> 分':'—'} ${cvTxt} <span class="muted" style="margin-left:8px">色带从新到旧：绿→蓝→赭；斜线灰底=该年未招，已留空；2024年以前为老高考数据</span></div>
+    <div class="major-scroll"><table class="major-table">
+      <tr><th>专业代码</th><th>专业名称（按档位分组）</th>${yrs3.map(y=>`<th>${y}年 最低分/位次/人数</th>`).join('')}</tr>
+      ${rows||`<tr><td colspan="${2+yrs3.length}" class="muted">该组暂无分专业明细（可能未公布）</td></tr>`}
+    </table></div>
+  </div>`;
+}
+
+/* ---- 8.2b 院校详情页 ---- */
+const SD={dh:null,years:[],rank:null,chart:null,trChart:null,gs:[],sc:null,_rs:false};
+function sdSchoolOf(dh){
+  for(const y of SD.years)for(const kl of ['物理类','历史类']){
+    const s=Store.schoolOf(y,dh,kl);if(s)return s;
+  }
+  return null;
+}
+function sdCollect(){
+  /* 跨年对齐：院校代号与组代号每年独立编码，可能不同。
+     以最新年为基准，其他年份先按院校名称对齐，再按"组内专业名称集合最大重叠"配对专业组 */
+  const baseY=SD.years[0];
+  const bp=Store.years[baseY];if(!bp)return [];
+  let yxName=null;
+  for(const g of bp.groups)if(g.dh===SD.dh){yxName=g.yx;break;}
+  if(!yxName)return [];
+  const groups=[],byKey=new Map();
+  for(const g of bp.groups){
+    if(g.dh!==SD.dh)continue;
+    const grp={gBase:g.g,lb:g.lb,xz:g.xz,kl:g.kl,byYear:{},majors:new Map(),set:new Set()};
+    grp.byYear[baseY]={dh:g.dh,g:g.g,min:g.min,max:g.max,n:g.n,rank:g.min?Store.rankOfScore(baseY,g.kl,g.min):null};
+    byKey.set(g.g+'|'+g.lb+'|'+g.xz,grp);
+    groups.push(grp);
+  }
+  for(const mz of bp.majors){
+    if(mz.dh!==SD.dh)continue;
+    const grp=byKey.get(mz.g+'|'+mz.lb+'|'+mz.xz);if(!grp)continue;
+    if(!grp.majors.has(mz.zm))grp.majors.set(mz.zm,{zd:mz.zd,zm:mz.zm,byYear:{}});
+    grp.majors.get(mz.zm).byYear[baseY]={min:mz.min,max:mz.max,n:mz.n,rank:mz.min?Store.rankOfScore(baseY,mz.kl,mz.min):null};
+    grp.set.add(mz.zm);
+  }
+  for(const y of SD.years.slice(1)){
+    const p=Store.years[y];if(!p)continue;
+    const cand=[],candByKey=new Map();
+    for(const g of p.groups){
+      if(g.yx!==yxName)continue;
+      const c={g,set:new Set(),used:false};
+      cand.push(c);candByKey.set(g.g+'|'+g.lb+'|'+g.xz,c);
+    }
+    for(const mz of p.majors){
+      if(mz.yx!==yxName)continue;
+      const c=candByKey.get(mz.g+'|'+mz.lb+'|'+mz.xz);if(c)c.set.add(mz.zm);
+    }
+    for(const grp of groups){
+      let c=candByKey.get(grp.gBase+'|'+grp.lb+'|'+grp.xz);
+      if(!c||c.used){ // 同代号匹配不上时，按专业名重叠最大配对
+        let bestN=0;c=null;
+        for(const cc of cand){
+          if(cc.used)continue;
+          let n=0;for(const z of grp.set)if(cc.set.has(z))n++;
+          if(n>bestN){bestN=n;c=cc;}
+        }
+        if(!c)continue;
+      }
+      c.used=true;
+      grp.byYear[y]={dh:c.g.dh,g:c.g.g,min:c.g.min,max:c.g.max,n:c.g.n,rank:c.g.min?Store.rankOfScore(y,c.g.kl,c.g.min):null};
+    }
+    for(const mz of p.majors){
+      if(mz.yx!==yxName)continue;
+      const grp=groups.find(g2=>g2.byYear[y]&&g2.byYear[y].g===mz.g&&g2.lb===mz.lb&&g2.xz===mz.xz);
+      if(!grp)continue;
+      if(!grp.majors.has(mz.zm))grp.majors.set(mz.zm,{zd:mz.zd,zm:mz.zm,byYear:{}});
+      grp.majors.get(mz.zm).byYear[y]={min:mz.min,max:mz.max,n:mz.n,rank:mz.min?Store.rankOfScore(y,mz.kl,mz.min):null};
+    }
+  }
+  return groups.map(g=>{
+    const ys=SD.years.filter(y=>g.byYear[y]);
+    let pct=null; // 位次同比变化（最新年 vs 上一可用年），正=位次变大=更好上
+    if(ys.length>=2&&g.byYear[ys[0]].rank&&g.byYear[ys[1]].rank)
+      pct=Math.round((g.byYear[ys[0]].rank-g.byYear[ys[1]].rank)/g.byYear[ys[1]].rank*100);
+    return {...g,ys,pct};
+  }).sort((a,b)=>((b.byYear[baseY]||{}).min||0)-((a.byYear[baseY]||{}).min||0));
+}
+/* ===== 院校详情页：7档固定配色（与结果页徽章同色系加深，专供图表） ===== */
+const SD_TIER_COLORS={t1:'#D16B64',t2:'#D6904A',t3:'#C2A23E',t4:'#93B04A',t5:'#6BA86A',t6:'#48948A',t7:'#5B7FA6'};
+const SD_NEUTRAL='#9AA7B8';
+/* 位次→(k,7档)：k=组录取位次/考生位次 */
+function sdKTier(rank,userRank){
+  const k=rank/userRank;
+  return {k,tier:Algo.tierOf(k,0)};
+}
+/* 组内代表专业（按基准年最低分取前几个，作为"中文组名"） */
+function sdReps(g,baseY,sep){
+  const arr=[...g.majors.values()].map(m=>({zm:normZm(m.zm),min:(m.byYear[baseY]||{}).min||0})).filter(x=>x.zm);
+  arr.sort((a,b)=>b.min-a.min);
+  const out=[],seen=new Set();
+  for(const x of arr){
+    const nm=x.zm.length>10?x.zm.slice(0,10):x.zm;
+    if(seen.has(nm))continue;seen.add(nm);
+    out.push(nm);
+    if(out.join(sep||'、').length>=14)break;
+  }
+  return out.join(sep||'、');
+}
+function openSchool(dh){
+  SD.dh=dh;
+  SD.years=NEW_GK_YEARS.filter(y=>Store.years[y]&&Store.years[y].groups&&Store.years[y].groups.length).sort((a,b)=>b-a);
+  SD.rank=(State.input&&State.input.rank0)||LS.get('sd_rank',null)||null;
+  if(SD.chart){SD.chart.dispose();SD.chart=null;}
+  if(SD.trChart){SD.trChart.dispose();SD.trChart=null;}
+  renderSchool();
+}
+function renderSchool(){
+  const dh=SD.dh;
+  const sc=sdSchoolOf(dh);
+  const gs=sdCollect();
+  SD.sc=sc;SD.gs=gs;
+  const info=schoolInfo(sc?sc.yx:'');
+  const schId=(/schId-(\d+)/.exec((sc&&sc.zszc)||'')||[])[1];
+  const yx=(sc&&sc.yx)||'代号 '+dh;
+  $('#sd-crumb').innerHTML=`<a href="#/results">推荐结果</a> / <a href="#/browse">历年数据</a> / ${esc(yx)}`;
+  $('#sd-main').innerHTML=`
+  <div class="sd-cols">
+   <div class="sd-left">
+    <div class="card">
+      <div class="sc-title">
+        <div><span class="sc-name">${esc(yx)}</span> <span class="muted">（内蒙古填报院校代号 <span class="cd">${esc(dh)}</span>）</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${(sc&&sc.zszc)?`<a class="btn btn-outline" style="padding:7px 14px;font-size:13.5px" href="${esc(sc.zszc)}" target="_blank" rel="noopener">招生章程</a>`:`<a class="btn btn-outline" style="padding:7px 14px;font-size:13.5px" href="https://gaokao.chsi.com.cn/zsgs/zhangcheng/" target="_blank" rel="noopener">招生章程（阳光高考查）</a>`}
+          ${schId?`<a class="btn btn-outline" style="padding:7px 14px;font-size:13.5px" href="https://gaokao.chsi.com.cn/sch/schoolInfo--schId-${schId}.dhtml" target="_blank" rel="noopener">院校官网/信息（阳光高考）</a>`:`<a class="btn btn-outline" style="padding:7px 14px;font-size:13.5px" href="https://www.bing.com/search?q=${encodeURIComponent(yx+' 本科招生官网')}" target="_blank" rel="noopener">搜索官网</a>`}
+        </div>
+      </div>
+      <div class="sc-meta" style="margin-top:8px">
+        <span>${info.region}</span><span>${info.type}</span>
+        <span class="sc-tags" style="display:inline-flex;margin:0">${schoolTagsHTML(yx,{xz:(sc&&sc.xz)||''})}</span>
+        <span>在内蒙古招生总计划：<b>${(sc&&sc.plan)?fmtN(sc.plan)+' 人':'—（未公布）'}</b></span>
+        <span>录取数据年份：${SD.years.join('、')}</span>
+      </div>
+    </div>
+    <div class="card" style="padding:16px 18px">
+      <div class="sd-rule">📌 <b>内蒙古填报重要规则：</b>1 个专业组占用 60 个志愿名额中的 1 个位置；每组最多填 12 个专业；服从调剂只在本组内部生效，<b>不同专业组之间不能跨组调剂</b>。</div>
+      <div class="sd-rankrow">
+        <label for="sd-rank">你的全省位次</label>
+        <input id="sd-rank" type="number" min="1" value="${SD.rank||''}" placeholder="如 28233">
+        <span class="muted">一分一段表的排名（数字越小=分数越高）。输入后全页自动标注 7 档难度。</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>本校全部专业组横向对比</h2>
+      <p class="sec" style="font-size:13.5px">横轴是 <b id="sd-chart-year">—</b> 年的组最低录取位次：<b>条形越靠右 = 位次数值越大 = 录取分数越低、越好考</b>；红色竖线 = 你的位次；条形颜色 = 按你的位次换算的 7 档难度（大冲→大保）。</p>
+      <div id="sd-chart"><div class="muted">正在准备图表…</div></div>
+    </div>
+    <div id="sd-groups"></div>
+    <div class="card">
+      <h2>跨年等位次换算</h2>
+      <p class="sec" style="font-size:14px">输入某年分数 → 换算当年位次 → 显示<b>同一位次</b>在历年对应的分数。位次是跨年比较的公平标尺：等值分的变化就是分数线的真实涨跌（消除试题难度差异）。</p>
+      <div class="filters">
+        <select id="eq-year">${ALL_CRAWL_YEARS.filter(y=>Store.rankIdx[y]).map(y=>`<option value="${y}">${y} 年（${y>=2025?'物理/历史':'理科/文科'}）</option>`).join('')}</select>
+        <select id="eq-cat"><option value="物理类">物理类（老高考对应理科）</option><option value="历史类">历史类（老高考对应文科）</option></select>
+        <input id="eq-score" type="number" placeholder="分数，如 501" style="width:130px">
+        <button class="btn btn-primary" id="eq-go" style="padding:8px 16px">换算</button>
+      </div>
+      <div id="eq-out"></div>
+    </div>
+    <div class="info-note">2024 及以前的录取分数在官网为 JSP 查询系统/PDF 归档（无机器可读数据），本页录取线对比覆盖官方公布 JSON 的年份（2025 起）；2023/2024 一分一段表已收录，可用于等位次换算。旧年份官方入口：<a href="${OFFICIAL_LINKS[2024]||OFFICIAL_LINKS.archive}" target="_blank" rel="noopener">2024 年查询</a> · <a href="${OFFICIAL_LINKS.archive}" target="_blank" rel="noopener">历年归档总入口</a></div>
+   </div>
+   <aside class="sd-side" id="sd-side"></aside>
+  </div>`;
+  sdRenderChart();
+  sdRenderGroups();
+  sdRenderSide();
+  let _t=null;
+  $('#sd-rank').oninput=e=>{
+    const v=Math.max(0,Math.floor(+e.target.value||0))||null;
+    SD.rank=v;LS.set('sd_rank',v||'');
+    clearTimeout(_t);_t=setTimeout(()=>{sdRenderChart();sdRenderGroups();sdRenderSide();},350);
+  };
+  $('#eq-go').onclick=renderEq;
+  $('#eq-score').onkeydown=e=>{if(e.key==='Enter')renderEq();};
+  if(!SD._rs){SD._rs=true;window.addEventListener('resize',()=>{if(SD.chart)SD.chart.resize();if(SD.trChart)SD.trChart.resize();});}
+  $('#sdtr-close').onclick=sdCloseTrend;
+  $('#sdtr-mask').onclick=sdCloseTrend;
+}
+/* ---- 可视化1：全部专业组横向条形对比（ECharts，无对数刻度） ---- */
+function sdFallbackTable(rows,baseY){
+  return `<p class="muted" style="margin-bottom:8px">图表组件未加载（echarts.min.js 缺失）或数据不足，先用表格查看：</p>
+  <div class="major-scroll"><table class="major-table">
+    <tr><th>专业组</th><th>代表专业</th><th>${baseY} 最低分</th><th>最低位次</th><th>录取人数</th><th>对比你的位次</th></tr>
+    ${rows.map(r=>`<tr><td>组 ${esc(r.g.gBase)}（${esc(r.g.kl||'')}）</td><td>${esc(sdReps(r.g,baseY))||'—'}</td><td><b>${r.d.min||'—'}</b></td><td>${fmtN(r.d.rank)}</td><td>${r.d.n||'—'}</td><td>${SD.rank?tierBadge(sdKTier(r.d.rank,SD.rank).tier):'<span class="muted">先输入位次</span>'}</td></tr>`).join('')}
+  </table></div>`;
+}
+function sdRenderChart(){
+  const el=$('#sd-chart');if(!el)return;
+  const baseY=SD.years[0];
+  const yEl=$('#sd-chart-year');if(yEl)yEl.textContent=baseY;
+  if(SD.chart){SD.chart.dispose();SD.chart=null;}
+  const rows=(SD.gs||[]).filter(g=>g.byYear[baseY]&&g.byYear[baseY].rank>0)
+    .map(g=>({g,d:g.byYear[baseY]})).sort((a,b)=>a.d.rank-b.d.rank);
+  if(!rows.length){el.style.height='';el.innerHTML=`<p class="muted">该校在 ${baseY} 年暂无可用的组录取位次数据，画不出对比图。下方各专业组卡片里还有其他年份的数据可以参考。</p>`;return;}
+  if(!window.echarts){el.style.height='';el.innerHTML=sdFallbackTable(rows,baseY);return;}
+  const useZoom=rows.length>20;
+  el.style.height=(useZoom?Math.min(rows.length*58+100,1150):Math.max(240,rows.length*58+100))+'px';el.innerHTML='';
+  const data=rows.map(r=>{
+    const t=SD.rank?sdKTier(r.d.rank,SD.rank).tier:null;
+    return {value:r.d.rank,itemStyle:{color:t?SD_TIER_COLORS[t.cls]:SD_NEUTRAL,borderRadius:[0,4,4,0]},raw:r};
+  });
+  const chart=echarts.init(el);
+  chart.setOption({
+    grid:{left:8,right:(useZoom?126:100),top:16,bottom:12,containLabel:true},
+    xAxis:{type:'value',name:'最低录取位次',nameLocation:'middle',nameGap:30,nameTextStyle:{fontSize:12,color:'#6B6B6B'},
+      axisLabel:{formatter:v=>fmtN(v),fontSize:11.5,color:'#6B6B6B'},splitLine:{lineStyle:{color:'#EEE8DF'}}},
+    yAxis:{type:'category',inverse:true,
+      data:rows.map(r=>'组'+r.g.gBase+(sdReps(r.g,baseY,'/')?' · '+sdReps(r.g,baseY,'/'):'')+(r.g.kl?' · '+String(r.g.kl).replace('类',''):'')),
+      axisLabel:{formatter:v=>v.length>18?v.slice(0,18)+'…':v,fontSize:12,color:'#3A3A3A'},axisTick:{show:false}},
+    tooltip:{trigger:'item',confine:true,formatter:p=>{
+      const r=p.data.raw,g=r.g,d=r.d;
+      const t=SD.rank?sdKTier(d.rank,SD.rank).tier:null;
+      return `<b>专业组 ${esc(g.gBase)}</b>（${esc([g.kl,g.lb,g.xz].filter(Boolean).join(' · '))}）<br>`
+        +(sdReps(g,baseY)?`代表专业：${esc(sdReps(g,baseY))}<br>`:'')
+        +`最低位次 <b>${fmtN(d.rank)}</b> · 最低分 <b>${d.min||'—'}</b> · 录取 ${d.n||'—'} 人<br>`
+        +(t?`对比你的位次：<b>${esc(t.name)}</b>（${esc(t.desc)}）`:'输入位次后可显示难度档位');
+    }},
+    series:[{type:'bar',data,barMaxWidth:26,
+      label:{show:true,position:'right',formatter:p=>fmtN(p.value),fontSize:11.5,color:'#6B6B6B'},
+      markLine:SD.rank?{symbol:'none',silent:true,data:[{xAxis:SD.rank}],
+        lineStyle:{color:'#D9534F',type:'solid',width:2},
+        label:{formatter:'你的位次\n'+fmtN(SD.rank),color:'#D9534F',fontSize:11,position:'end'}}:null
+    }],
+    dataZoom:useZoom?[
+      {type:'slider',yAxisIndex:0,right:6,top:16,bottom:16,width:18,start:0,end:+(20/rows.length*100).toFixed(1)},
+      {type:'inside',yAxisIndex:0}
+    ]:null
+  });
+  SD.chart=chart;
+}
+/* ---- 专业组卡片列表 ---- */
+function sdMiniBar(kt){
+  const segs=TIERS.map(t=>`<span class="sd-seg ${t.cls}" title="${esc(t.name)}：${esc(t.desc)}"></span>`).join('');
+  const bnds=[0.70,0.85,0.95,1.15,1.40,1.80];
+  const kc=Math.min(Math.max(kt.k,0.55),2.2);
+  let idx=bnds.findIndex(b=>kc<=b);if(idx<0)idx=6;
+  const lo=idx===0?0.55:bnds[idx-1],hi=bnds[idx];
+  const frac=Math.min(1,Math.max(0,(kc-lo)/(hi-lo)));
+  const pos=((idx+frac)/7*100).toFixed(1);
+  return `<div class="sd-minibar">
+    <div class="sd-minibar-track">${segs}<span class="sd-marker" style="left:${pos}%"></span></div>
+    <div class="sd-minibar-scale">${TIERS.map(t=>`<span>${t.name}</span>`).join('')}</div>
+  </div>`;
+}
+function sdGroupCard(g,baseY){
+  const d=g.byYear[baseY]||{};
+  const kt=(SD.rank&&d.rank>0)?sdKTier(d.rank,SD.rank):null;
+  const attrs=[g.kl,g.lb,g.xz].filter(Boolean).join(' · ');
+  const wished=State.wish.some(w=>w.key===SD.dh+'|'+g.gBase);
+  const mrows=[...g.majors.values()].sort((a,b)=>((b.byYear[baseY]||{}).min||0)-((a.byYear[baseY]||{}).min||0)).map(m=>{
+    const md=m.byYear[baseY];
+    return `<tr><td class="cd">${esc(m.zd||'—')}</td><td><b>${esc(m.zm)}</b></td><td>${md&&md.min?md.min:'—'}</td><td>${md&&md.rank>0?fmtN(md.rank):'—'}</td><td>${md&&md.n?md.n:'—'}</td></tr>`;
+  }).join('');
+  const pctTxt=g.pct==null?'':g.pct>2?`<span class="up">▲ 位次同比 +${g.pct}%（竞争缓和）</span>`:g.pct<-2?`<span class="down">▼ 位次同比 ${g.pct}%（竞争加剧）</span>`:'<span class="muted">→ 同比持平</span>';
+  return `<div class="card sd-grp">
+    <div class="sd-grp-head">
+      <div><span class="sd-grp-title">专业组 ${esc(g.gBase)}</span>${kt?tierBadge(kt.tier):''}</div>
+      <div class="muted">${esc(attrs)}${sdReps(g,baseY)?' · 代表专业：'+esc(sdReps(g,baseY)):''}</div>
+    </div>
+    <div class="sd-grp-data">
+      <span>${baseY} 年最低位次 <b>${d.rank>0?fmtN(d.rank):'—'}</b></span>
+      <span>最低分 <b>${d.min||'—'}</b></span>
+      <span>录取 <b>${d.n||'—'}</b> 人</span>
+      <span>组最高分 ${d.max||'—'}</span>
+      ${pctTxt}
+    </div>
+    ${kt?sdMiniBar(kt):'<div class="muted" style="font-size:12.5px">输入你的位次后，这里会自动显示 7 档难度标记</div>'}
+    <div class="sd-grp-tip">填报提示：本组占用 <b>1 个志愿名额</b>（60 个中的 1 个）· 组内最多填 <b>12 个专业</b> · 服从调剂<b>仅限本组内部</b>，不可跨组调剂</div>
+    <div class="sd-major-list"><table class="major-table">
+      <tr><th>专业代码</th><th>专业名称</th><th>${baseY} 最低分</th><th>位次</th><th>人数</th></tr>
+      ${mrows||'<tr><td colspan="5" class="muted">本组暂无分专业明细（可能未公布）</td></tr>'}
+    </table></div>
+    <div class="sd-grp-btns">
+      <button class="btn ${wished?'btn-outline':'btn-primary'} sd-wish-btn" data-g="${esc(g.gBase)}">${wished?'✓ 已在志愿备选':'+ 加入志愿备选'}</button>
+      <button class="btn btn-outline sd-trend-btn" data-g="${esc(g.gBase)}">展开查看本组历年趋势</button>
+    </div>
+  </div>`;
+}
+function sdRenderGroups(){
+  const el=$('#sd-groups');if(!el)return;
+  const gs=SD.gs||[];
+  if(!gs.length){el.innerHTML='<div class="card empty-tip">该校在所选年份无本科录取数据</div>';return;}
+  const baseY=SD.years[0];
+  el.innerHTML=`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:4px 0 10px">
+    <h2 style="margin:0">专业组卡片（${gs.length} 个组）</h2>
+    <span class="muted">按 ${baseY} 年最低分从高到低排序 · 每个组 = 1 个志愿单位</span>
+  </div>`+gs.map(g=>sdGroupCard(g,baseY)).join('');
+  $$('#sd-groups .sd-wish-btn').forEach(b=>b.onclick=()=>sdWishToggle(b.dataset.g));
+  $$('#sd-groups .sd-trend-btn').forEach(b=>b.onclick=()=>sdOpenTrend(b.dataset.g));
+}
+/* ---- 志愿备选侧栏（仅院校详情页；与本机志愿表实时同步） ---- */
+function sdRenderSide(){
+  const el=$('#sd-side');if(!el)return;
+  const n=State.wish.length;
+  const counts=TIERS.map(t=>({...t,n:State.wish.filter(w=>w.tName===t.name).length}));
+  const sorted=[...State.wish].sort((a,b)=>TIERS.findIndex(t=>t.name===a.tName)-TIERS.findIndex(t=>t.name===b.tName));
+  el.innerHTML=`<div class="card sd-side-card">
+    <h3>志愿备选</h3>
+    <div class="sd-side-count">已选 <b>${n}</b> / 60 个志愿单位</div>
+    <div class="sd-side-bar"><span style="width:${Math.min(100,n/60*100).toFixed(1)}%"></span></div>
+    <div class="sd-side-tiers">${counts.map(c=>`<span class="badge ${c.cls}">${c.name} ${c.n}</span>`).join('')}</div>
+    <div class="sd-side-list">${sorted.length?sorted.map(w=>`<div class="sd-side-row"><span class="badge ${w.tCls||'t4'}">${esc(w.tName||'—')}</span><span class="sd-side-name" title="${esc(w.yx)} 组 ${esc(w.g)}">${esc(w.yx)} <span class="cd">${esc(w.g)}</span></span><button class="sd-side-del" data-del="${esc(w.key)}" title="从备选中移除">✕</button></div>`).join(''):'<div class="muted" style="font-size:12.5px">还没有选择——在左侧各专业组卡片点「加入志愿备选」。</div>'}</div>
+    <p class="muted" style="margin-top:10px">备选与本机「志愿表」实时同步（含推荐结果页），按考生档案保存。每个专业组占 1 个志愿名额；正式填报时每组最多填 12 个专业，调剂仅限组内。</p>
+  </div>`;
+  $$('#sd-side .sd-side-del').forEach(b=>b.onclick=()=>{
+    const i=State.wish.findIndex(w=>w.key===b.dataset.del);
+    if(i>=0)State.wish.splice(i,1);
+    saveWish();sdWishSync();
+  });
+}
+function sdWishSync(){
+  $$('#sd-groups .sd-wish-btn').forEach(b=>{
+    const on=State.wish.some(w=>w.key===SD.dh+'|'+b.dataset.g);
+    b.classList.toggle('btn-primary',!on);b.classList.toggle('btn-outline',on);
+    b.textContent=on?'✓ 已在志愿备选':'+ 加入志愿备选';
+  });
+  renderWishBar();
+  renderWishModal();
+  sdRenderSide();
+}
+function sdWishToggle(gBase){
+  if(!Stu.data){toast('请先在首页输入考生姓名建档，再使用志愿备选');return;}
+  const key=SD.dh+'|'+gBase;
+  const i=State.wish.findIndex(w=>w.key===key);
+  if(i>=0){State.wish.splice(i,1);}
+  else{
+    if(State.wish.length>=60){toast('内蒙古本科批共 60 个志愿名额，备选已满 60 个，请先移除再加');return;}
+    if(!SD.rank){toast('请先在本页顶部输入你的全省位次，系统才能为该组计算 7 档难度');return;}
+    const g=(SD.gs||[]).find(x=>String(x.gBase)===String(gBase));
+    if(!g)return;
+    const baseY=SD.years[0],d=g.byYear[baseY]||{};
+    if(!(d.rank>0)){toast('该组暂无录取位次数据，无法评估难度档位');return;}
+    const kt=sdKTier(d.rank,SD.rank);
+    State.wish.push({key,dh:SD.dh,g:g.gBase,yx:(SD.sc&&SD.sc.yx)||('代号 '+SD.dh),
+      tName:kt.tier.name,tCls:kt.tier.cls,k:kt.k,prob:probOf(kt.k),gRank:d.rank,
+      min:d.min||null,y:baseY,cat:g.kl||''});
+  }
+  saveWish();
+  sdWishSync();
+}
+/* ---- 可视化2：单组历年位次折线（ECharts，原始位次，无对数） ---- */
+function sdCloseTrend(){
+  $('#sdtr-modal').style.display='none';$('#sdtr-mask').style.display='none';
+  if(SD.trChart){SD.trChart.dispose();SD.trChart=null;}
+}
+function sdOpenTrend(gBase){
+  const g=(SD.gs||[]).find(x=>String(x.gBase)===String(gBase));if(!g)return;
+  const pts=SD.years.filter(y=>g.byYear[y]&&g.byYear[y].min>0).sort((a,b)=>a-b)
+    .map(y=>({y,...g.byYear[y]}));
+  $('#sdtr-title').textContent=`专业组 ${g.gBase} 历年录取趋势`;
+  $('#sdtr-sub').textContent=[g.kl,g.lb,g.xz].filter(Boolean).join(' · ')+(sdReps(g,SD.years[0])?' · 代表专业：'+sdReps(g,SD.years[0]):'');
+  $('#sdtr-mask').style.display='';$('#sdtr-modal').style.display='';
+  const chartEl=$('#sdtr-chart'),tableEl=$('#sdtr-table');
+  if(SD.trChart){SD.trChart.dispose();SD.trChart=null;}
+  const tbl=`<div class="major-scroll"><table class="major-table">
+    <tr><th>年份</th><th>最低分</th><th>最低位次</th><th>最高分</th><th>录取人数</th></tr>
+    ${pts.map(p=>`<tr><td>${p.y} 年</td><td><b>${p.min}</b></td><td>${p.rank>0?fmtN(p.rank):'—'}</td><td>${p.max||'—'}</td><td>${p.n||'—'}</td></tr>`).join('')}
+  </table></div>`;
+  if(pts.length<2){
+    chartEl.innerHTML='';chartEl.style.height='';
+    tableEl.innerHTML=`<div class="sd-tr-fallback">该组可用的录取年份数据不足 2 年，画不出趋势线。先看下面的历年数据表（位次数值越大 = 分数越低、越好考）：</div>${tbl}`;
+    return;
+  }
+  if(!window.echarts){
+    chartEl.innerHTML='';chartEl.style.height='';
+    tableEl.innerHTML=`<div class="sd-tr-fallback">图表组件未能加载（echarts.min.js 文件缺失），先用数据表查看：</div>${tbl}`;
+    return;
+  }
+  tableEl.innerHTML='';chartEl.style.height='340px';
+  const chart=echarts.init(chartEl);
+  chart.setOption({
+    grid:{left:10,right:26,top:36,bottom:10,containLabel:true},
+    tooltip:{trigger:'axis',confine:true,formatter:ps=>{
+      const d=pts[ps[0].dataIndex];
+      return `${d.y} 年<br>最低分 <b>${d.min}</b> · 最低位次 <b>${fmtN(d.rank)}</b><br>录取 ${d.n||'—'} 人 · 组最高 ${d.max||'—'}`;
+    }},
+    xAxis:{type:'category',data:pts.map(p=>p.y+' 年'),axisLabel:{fontSize:12.5}},
+    yAxis:{type:'value',name:'最低录取位次（原始数值）',nameTextStyle:{fontSize:11.5,color:'#6B6B6B'},
+      axisLabel:{formatter:v=>fmtN(v),fontSize:11.5,color:'#6B6B6B'},splitLine:{lineStyle:{color:'#EEE8DF'}}},
+    series:[{type:'line',data:pts.map(p=>p.rank),
+      lineStyle:{width:2.5,color:'#5E708C'},itemStyle:{color:'#5E708C'},
+      label:{show:true,formatter:p=>fmtN(p.value),fontSize:11,color:'#6B6B6B',position:'top'},
+      markLine:SD.rank?{symbol:'none',silent:true,data:[{yAxis:SD.rank}],
+        lineStyle:{color:'#D9534F',type:'dashed',width:2},
+        label:{formatter:'你的位次 '+fmtN(SD.rank),color:'#D9534F',fontSize:11.5,position:'insideEndTop'}}:null
+    }]
+  });
+  SD.trChart=chart;
+}
+/* 科类跨年映射（双向）：2025 起为物理类/历史类，之前为理科/文科。
+   无论传入哪种表述，都换算成 y 年官网一分一段实际使用的科类键 */
+function catOf(y,cat){
+  const hist=(cat==='历史类'||cat==='文科');
+  return y>=2025?(hist?'历史类':'物理类'):(hist?'文科':'理科');
+}
+function renderEq(){
+  // 动态重建年份选项：后台新爬完的年份立即可用
+  const sel=$('#eq-year'),old=sel.value;
+  const yrsAvail=ALL_CRAWL_YEARS.filter(y=>Store.rankIdx[y]).sort((a,b)=>b-a);
+  sel.innerHTML=yrsAvail.map(y=>`<option value="${y}">${y} 年（${y>=2025?'物理/历史':'理科/文科'}）</option>`).join('');
+  if(yrsAvail.some(y=>String(y)===old))sel.value=old;
+  const y=+sel.value,cat0=$('#eq-cat').value;
+  if(!y){$('#eq-out').innerHTML='<p class="muted">暂无一分一段数据</p>';return;}
+  const sc=+$('#eq-score').value;
+  const out=$('#eq-out');
+  if(!sc){out.innerHTML='<p class="muted">请输入分数</p>';return;}
+  const rank=Store.rankOfScore(y,catOf(y,cat0),sc);
+  if(!rank){out.innerHTML='<p class="muted">该分数超出当年统计范围</p>';return;}
+  const yrs=ALL_CRAWL_YEARS.filter(yy=>Store.rankIdx[yy]&&Store.rankIdx[yy][catOf(yy,cat0)]).sort((a,b)=>b-a);
+  out.innerHTML=`<p style="font-size:14px;margin-top:6px">按 ${y} 年${esc(catOf(y,cat0))}一分一段：<b>${sc}</b> 分 ≈ 位次 <b>${fmtN(rank)}</b>。同一位次在历年对应的分数：</p>
+  <div class="eq-grid">${yrs.map(yy=>{
+    const s2=Store.scoreOfRank(yy,catOf(yy,cat0),rank);
+    const d=(s2!=null&&yy!==y)?s2-sc:null;
+    const dl=d==null?'':d>0?`<div class="d up">等值分高 ${d} 分</div>`:d<0?`<div class="d down">等值分低 ${-d} 分</div>`:'<div class="d muted">持平</div>';
+    return `<div class="eq-cell ${yy===y?'base':''}"><div class="y">${yy} 年（${esc(catOf(yy,cat0))}）</div><div class="v">${s2!=null?s2:'—'}</div>${dl}</div>`;
+  }).join('')}</div>
+  <p class="muted" style="margin-top:8px">解读：若某年等值分更低，说明该年同位次分数更低（试题难度/划线不同），直接比分数会误判涨跌。2024/2023 为老高考（理科/文科），与新高考的人数结构有差异，结果供参考。</p>`;
+}
+
+/* ---- 8.3 历年数据浏览 ---- */
+function initBrowse(){
+  const ys=[...NEW_GK_YEARS,...RANK_YEARS,...OLD_YEARS];
+  $('#br-year').innerHTML=ys.map(y=>`<option value="${y}">${y}年${NEW_GK_YEARS.includes(y)?'（录取+一分一段）':RANK_YEARS.includes(y)?'（一分一段）':'（官方归档）'}</option>`).join('');
+  $('#br-go').onclick=browseRun;
+  $('#br-kw').onkeydown=e=>{if(e.key==='Enter')browseRun();};
+}
+async function browseRun(){
+  const y=+$('#br-year').value,cat=$('#br-cat').value,kw=$('#br-kw').value.trim();
+  const note=$('#br-note'),list=$('#br-list');
+  if(RANK_YEARS.includes(y)){ // 官网仅公布一分一段表的年份：提供分数↔位次查询 + 跨年等值
+    note.innerHTML='<div class="muted"><span class="spin"></span> 确保数据就绪…</div>';
+    if(!Store.years[y]){try{await autoCrawl([y],true);}catch(e){}}
+    const p=Store.years[y];
+    if(!p||!p.rank){note.innerHTML='<div class="info-note">该年一分一段表爬取失败，可稍后重试</div>';list.innerHTML='';return;}
+    const cats=Object.keys(p.rank);
+    const eqYears=ALL_CRAWL_YEARS.filter(yy=>Store.rankIdx[yy]).sort((a,b)=>b-a);
+    note.innerHTML=`<div class="muted">${y} 年为老高考年份，官网仅公布一分一段表（${cats.join('、')}），录取分数请用官方入口：<a href="${OFFICIAL_LINKS[y]||OFFICIAL_LINKS.archive}" target="_blank" rel="noopener">${y} 年官方查询</a></div>`;
+    list.innerHTML=`<div class="card"><h3>${y} 年一分一段查询（分数 → 位次）</h3>
+      <div class="filters">
+        <select id="rk-cat">${cats.map(c=>`<option>${esc(c)}</option>`).join('')}</select>
+        <input id="rk-score" type="number" placeholder="输入分数，如 501" style="width:160px">
+      </div>
+      <div id="rk-res"></div>
+      <p class="muted" style="margin-top:8px">查到位次后会同时给出同一位次在 ${eqYears.join('、')} 年的等值分数，方便跨年比较。</p></div>`;
+    const run=()=>{
+      const c=$('#rk-cat').value,s=+$('#rk-score').value;
+      const out=$('#rk-res');
+      if(!s){out.innerHTML='';return;}
+      const r=Store.rankOfScore(y,catOf(y,c),s);
+      if(!r){out.innerHTML='<p class="muted">分数超出当年统计范围</p>';return;}
+      out.innerHTML=`<p style="font-size:15px;margin-top:6px">${y} 年${esc(c)}：<b>${s}</b> 分 ≈ 位次 <b>${fmtN(r)}</b></p>
+      <div class="eq-grid">${eqYears.map(yy=>{
+        const cc=catOf(yy,c);
+        const s2=Store.scoreOfRank(yy,cc,r);
+        const d=(s2!=null&&yy!==y)?s2-s:null;
+        const dl=d==null?'':d>0?`<div class="d up">等值分高 ${d} 分</div>`:d<0?`<div class="d down">等值分低 ${-d} 分</div>`:'<div class="d muted">持平</div>';
+        return `<div class="eq-cell ${yy===y?'base':''}"><div class="y">${yy} 年${yy>=2025?'':'（老高考）'}</div><div class="v">${s2!=null?s2:'—'}</div>${dl}</div>`;
+      }).join('')}</div>`;
+    };
+    $('#rk-score').oninput=run;$('#rk-cat').onchange=run;
+    return;
+  }
+  if(!NEW_GK_YEARS.includes(y)){
+    note.innerHTML=`<div class="info-note">${y}年为旧高考（文理科）年份，官方原始数据以 JSP 查询系统与 PDF 统计表归档，浏览器端无法直接解析。请查看官方入口：<br>
+      <a href="${OFFICIAL_LINKS[y]||OFFICIAL_LINKS.archive}" target="_blank" rel="noopener">${OFFICIAL_LINKS[y]||'平安高考信息查询归档'}</a> ·
+      <a href="${OFFICIAL_LINKS.archive}" target="_blank" rel="noopener">历年信息查询总入口</a></div>`;
+    list.innerHTML='';return;
+  }
+  note.innerHTML='<div class="muted"><span class="spin"></span> 确保数据就绪…</div>';
+  if(!Store.years[y]){try{await autoCrawl([y],true);}catch(e){}}
+  const p=Store.years[y];
+  if(!p){note.innerHTML='<div class="info-note">该年数据爬取失败，可稍后重试或到数据中心查看日志</div>';list.innerHTML='';return;}
+  note.innerHTML=`<div class="muted">数据来源：官网公布表 · 爬取时间 ${p.crawledAt?esc(p.crawledAt.slice(0,16)).replace('T',' '):'—'} · 专业明细 ${p.majors.length} 条${p.rankOnly?' · <b>该年官网未能解析出录取明细（仅一分一段表），可在数据中心手动重试</b>':''}</div>`;
+  // 聚合展示：院校 → 专业组 → 专业
+  const gmap=new Map();
+  for(const g of p.groups){
+    if(g.kl!==cat)continue;
+    if(kw&&!g.yx.includes(kw))continue;
+    const k=g.dh+'|'+g.g+'|'+g.lb+'|'+g.xz;
+    gmap.set(k,{...g,majors:[]});
+  }
+  for(const mz of p.majors){
+    if(mz.kl!==cat)continue;
+    if(kw&&!mz.yx.includes(kw))continue;
+    const k=mz.dh+'|'+mz.g+'|'+mz.lb+'|'+mz.xz;
+    const grp=gmap.get(k);if(grp)grp.majors.push(mz);
+  }
+  const arr=[...gmap.values()].sort((a,b)=>(b.min||0)-(a.min||0)).slice(0,200);
+  list.innerHTML=arr.length?arr.map(g=>{
+    const rows=g.majors.map(m=>`<tr><td>${esc(m.zd)}</td><td><b>${esc(m.zm)}</b></td>
+      <td>最高 ${m.max||'—'} / 最低 <b>${m.min||'—'}</b></td><td>${m.n||0}人</td>
+      <td>${m.min?fmtN(Store.rankOfScore(y,cat,m.min)):'—'}</td></tr>`).join('');
+    return `<div class="school-card">
+      <div class="sc-head"><div class="sc-title"><div><span class="sc-name">${esc(g.yx)}</span> <span class="muted">（${esc(g.dh)}）组 ${esc(g.g)}</span></div>
+      <div class="muted">${esc(g.pc)} · ${esc(g.lb)} · ${esc(g.xz)}</div></div></div>
+      <div class="sc-scores"><div>组最低 <b>${g.min||'—'}</b> / 最高 ${g.max||'—'} / 位次 ${g.min?fmtN(Store.rankOfScore(y,cat,g.min)):'—'}</div><div>录取 ${g.n||0} 人</div></div>
+      <div class="major-scroll"><table class="major-table"><tr><th>代号</th><th>专业</th><th>最高/最低分</th><th>人数</th><th>最低分位次</th></tr>${rows||'<tr><td colspan="5" class="muted">无明细</td></tr>'}</table></div>
+    </div>`;
+  }).join(''):'<div class="card empty-tip">无匹配结果</div>';
+}
+
+/* ---- 8.4 测评（简版霍兰德） ---- */
+const TEST_Q=[
+ ['修理电器或机械','R'],['做木工/手工','R'],['驾驶操作设备','R'],
+ ['做科学实验','I'],['分析数据找规律','I'],['钻研一个问题直到搞懂','I'],
+ ['教别人知识','S'],['帮助解决纠纷','S'],['参加志愿活动','S'],
+ ['经营小生意','E'],['说服别人接受想法','E'],['组织活动','E'],
+ ['整理归档资料','C'],['核对账目','C'],['按流程细致完成任务','C'],
+ ['写文章/剧本','A'],['绘画/设计','A'],['演奏乐器','A']];
+const RIASEC_NAMES={R:'现实型（动手/技术）',I:'研究型（分析/科研）',S:'社会型（教育/助人）',E:'企业型（经营/组织）',C:'常规型（事务/细节）',A:'艺术型（创意/表达）'};
+function initTest(){
+  const body=$('#test-body');
+  body.innerHTML=TEST_Q.map((q,i)=>`<div style="margin:8px 0"><label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer"><input type="checkbox" data-i="${i}" data-t="${q[1]}"> <span>${q[0]}</span></label></div>`).join('')+`<button class="btn btn-primary btn-block" id="test-go" style="margin-top:10px">查看我的兴趣类型</button><div id="test-res"></div>`;
+  $('#test-go').onclick=()=>{
+    const cnt={};
+    $$('#test-body input:checked').forEach(c=>cnt[c.dataset.t]=(cnt[c.dataset.t]||0)+1);
+    const arr=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);
+    $('#test-res').innerHTML=arr.length?`<div class="card" style="background:var(--bg-warm);margin-top:12px"><h3>你的倾向：${RIASEC_NAMES[arr[0][0]]}${arr[1]?' ＋ '+RIASEC_NAMES[arr[1][0]]:''}</h3><p class="muted">选中 ${arr.reduce((a,b)=>a+b[1],0)} 项。在推荐结果里搜索对应类型的关键词（如"师范/医科/财经"）缩小范围。</p></div>`:'<p class="muted" style="margin-top:10px">请先勾选你感兴趣的活动</p>';
+    LS.set('test',arr);
+  };
+}
+
+/* ---- 8.5 数据中心 ---- */
+let crawling=false;
+function initData(){
+  $('#dc-refresh').onclick=async()=>{
+    if(crawling)return toast('正在爬取中…');
+    await autoCrawl([...ALL_CRAWL_YEARS],true);
+    renderDataCenter();homePreview();
+  };
+  $('#dc-export').onclick=async()=>{
+    const btn=$('#dc-export');if(btn.disabled)return;btn.disabled=true;const old=btn.textContent;btn.textContent='正在打包…';
+    try{
+      const years={};for(const y of ALL_CRAWL_YEARS){const p=await Store.loadYear(y);if(p)years[y]=p;}
+      let zg=null;try{zg=await Crawler._zgIdMap();}catch(e){}
+      const ls={};
+      for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);
+        if(k&&k.indexOf('gb_')===0){try{ls[k.slice(3)]=JSON.parse(localStorage.getItem(k));}catch(e){}}}
+      const pack={v:1,savedAt:new Date().toISOString().slice(0,10),years:years,zgIdMap:zg,ls:ls};
+      const json=JSON.stringify(pack);
+      let saved='';
+      if(location.protocol==='http:'||location.protocol==='https:'){
+        try{
+          const r=await fetch('/save',{method:'POST',body:json});
+          if(r.ok){const j=await r.json().catch(()=>({}));saved=`已保存到网站目录 gaobao-data.json（${Math.round((j.bytes||json.length)/1024)} KB）`;}
+        }catch(e){}
+      }
+      if(saved){dcLog(saved);toast('数据备份已保存到项目目录');}
+      else{
+        const blob=new Blob([json],{type:'application/json'});
+        const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gaobao-data.json';
+        document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+        dcLog(`已导出 ${Object.keys(years).length} 年数据${zg?' + 校名映射':''}，共 ${Math.round(blob.size/1024)} KB → 浏览器下载目录 gaobao-data.json`);
+        toast('备份已导出到下载目录');
+      }
+    }catch(e){dcLog('导出失败：'+e.message);toast('导出失败');}
+    btn.disabled=false;btn.textContent=old;
+  };
+  $('#dc-clear').onclick=async()=>{
+    if(!confirm('确定清空本地全部爬取数据？'))return;
+    await IDB.clear().catch(()=>{});Store.years={};Store.planMap={};Store.schoolMap={};Store.rankIdx={};
+    dcLog('已清空本地缓存');renderDataCenter();homePreview();toast('已清空');
+  };
+  renderDataCenter();
+}
+function renderDataCenter(){
+  const el=$('#dc-years');
+  el.innerHTML=ALL_CRAWL_YEARS.map(y=>{
+    const p=Store.years[y];
+    return `<div class="progress-wrap"><b>${y} 年数据</b> ${
+      p?`<span class="badge t5">已就绪</span> ${p.rankOnly?'<span class="muted">（仅有一分一段表，录取数据补抓未完成）</span>':`<span class="muted">专业${p.majors.length} · 组${p.groups.length} · 计划${(p.plans||[]).length} ·</span>`} ${p.suppAt?`<span class="muted" title="${esc(p.suppSource||'')}">录取数据来自掌上高考补抓</span>`:''} <span class="muted">更新于 ${p.crawledAt?esc(p.crawledAt.slice(0,16)).replace('T',' '):'—'}</span>`
+       :'<span class="badge t1">未爬取</span>'}</div>`;
+  }).join('');
+}
+async function autoCrawl(years,showProgress){
+  if(crawling)return;
+  crawling=true;
+  // 启动新纪元：使其他页面/旧加载中残留的补抓循环自动退出
+  Crawler._epoch=String(Date.now());LS.set('gb_crawlEpoch',Crawler._epoch);
+  if(showProgress)$('#dc-prog').style.display='';
+  const total=years.length;
+  for(let i=0;i<years.length;i++){
+    const y=years[i];
+    Crawler.progress=(d,t,txt)=>{ if(showProgress){
+      const overall=((i+d/t)/total)*100;
+      $('#dc-fill').style.width=overall.toFixed(0)+'%';
+      $('#dc-text').textContent=`${y} 年：${txt||''} (${i+1}/${total})`;
+    }};
+    try{
+      await Crawler.crawlYear(y);
+      delete Store.years[y];await Store.loadYear(y); // 立即重建内存索引（此前缺失，爬完需刷新才生效）
+      // 老高考年份（2024/2023）官网无机器可读录取数据：自动转掌上高考补抓分专业分数/位次（支持断点续抓）
+      const p0=Store.years[y];
+      if(y>=SUPP_MIN_YEAR&&p0&&(p0.rankOnly||(p0.suppAt&&(!p0.suppComplete||p0.suppSource!==SUPP_SRC)))){
+        try{await Crawler.crawlSupplement(y);}catch(e){dcLog(`  ✗ ${y} 年补抓失败: ${e.message}`);}
+      }
+      dcLog(`✓ ${y} 年数据已就绪`);
+    }
+    catch(e){dcLog(`✗ ${y} 年爬取失败: ${e.message}`);}
+  }
+  Crawler.progress=null;crawling=false;
+  if(showProgress){$('#dc-prog').style.display='none';$('#dc-text').textContent='完成';}
+  LS.set('lastCrawl',new Date().toISOString().slice(0,10));
+  renderDataCenter();renderHomeStatus();homePreview();
+}
+
+/* =====================================================================
+ * 九、路由与启动
+ * ===================================================================*/
+const ROUTES={'':'home','/':'home','/results':'results','/browse':'browse','/test':'test','/data':'data','/about':'about'};
+function route(){
+  const h=location.hash.replace(/^#/,'')||'/';
+  let name=ROUTES[h],arg=null;
+  if(!name&&h.startsWith('/school/')){name='school';arg=decodeURIComponent(h.slice('/school/'.length));}
+  if(!name)name='home';
+  $$('.page').forEach(p=>p.classList.remove('active'));
+  $('#page-'+name).classList.add('active');
+  $$('.nav-links a').forEach(a=>a.classList.toggle('active',a.dataset.page===name));
+  window.scrollTo(0,0);
+  if(name==='school'){openSchool(arg);return;}
+  if(name==='results'){
+    if(State.result)renderResults();
+    else{ // 页面刷新后 State 丢失：用当前考生档案静默重算恢复
+      const d=Stu.ensure(),li=d&&d.lastInput;
+      if(li&&li.rank0&&Algo.candidateYears(li.examYear).length){
+        State.input=li;State.cat=li.cat||State.cat;
+        State.idxFilter=d.idxFilter||EMPTY_FILTER();
+        State.result=Algo.buildRecommendation({examYear:li.examYear,cat:li.cat,rank0:li.rank0,jhlbMode:li.jhlb||'普通类'});
+        State.filterTier=0;State.shown=0;
+        renderResults();
+      }
+    }
+  }
+}
+window.addEventListener('hashchange',route);
+
+async function boot(){
+  // 内置数据（供双击 file:// 直接打开使用）：仅填充 IDB 中缺失的年份，不覆盖已爬取的新数据
+  if(window.__GB_BUILTIN__){
+    const B=window.__GB_BUILTIN__;
+    try{
+      for(const k in (B.ls||{})){const cur=LS.get(k,null);if(cur===null||cur===undefined)LS.set(k,B.ls[k]);}
+      Stu.reg=LS.get('students',Stu.reg); // reg 在脚本解析时初始化（早于本恢复块），需重读
+      for(const y of ALL_CRAWL_YEARS){
+        const bp=(B.years||{})[y];if(!bp)continue;
+        const cur=await IDB.get('year_'+y).catch(()=>null);
+        const cnt=x=>x&&Array.isArray(x.majors)?x.majors.length:0;
+        const bad=p=>!!p&&y>=SUPP_MIN_YEAR&&(p.rankOnly||(p.suppAt&&(!p.suppComplete||p.suppSource!==SUPP_SRC)));
+        // 仅当本地缺失或本地数据比内置差（专业更少/不完整标记）时才用内置覆盖，绝不覆盖用户更新的完整数据
+        if(!cur||cnt(bp)>cnt(cur)||(bad(cur)&&!bad(bp)))await IDB.set('year_'+y,bp).catch(()=>{});
+      }
+      if(B.zgIdMap&&!Crawler._zgMap)Crawler._zgMap=B.zgIdMap;
+      window.__GB_BUILTIN_OK=true;
+    }catch(e){}
+  }
+  Stu.ensure();
+  State.wish=Stu.data?Stu.data.wish:[];
+  State.idxFilter=Stu.data&&Stu.data.idxFilter?Stu.data.idxFilter:EMPTY_FILTER();
+  initHome();initResults();initBrowse();initTest();initData();
+  renderWishBar();renderStuCur();
+  // 恢复当前考生表单
+  const li=Stu.data&&Stu.data.lastInput;
+  if(li)fillHomeFromInput(li);
+  route();
+  // 载入缓存
+  dcLog('启动：检查本地缓存…');
+  const cached=[];
+  for(const y of ALL_CRAWL_YEARS){const p=await Store.loadYear(y);if(p)cached.push(y);}
+  dcLog(cached.length?`本地已有：${cached.join('、')} 年`:'本地无缓存');
+  homePreview();renderDataCenter();buildHomeFilter(); // 缓存就绪后细化"具体专业"筛选选项
+  // 缓存就绪后再尝试恢复当前考生的结果页（boot 时的首次 route 因数据未载入可能跳过）
+  if(Stu.data&&Stu.data.lastInput&&Stu.data.lastInput.rank0&&!State.result&&Algo.candidateYears(Stu.data.lastInput.examYear).length){
+    const x=Stu.data.lastInput;
+    State.input=x;State.cat=x.cat||State.cat;
+    State.result=Algo.buildRecommendation({examYear:x.examYear,cat:x.cat,rank0:x.rank0,jhlbMode:x.jhlb||'普通类'});
+    if((location.hash.replace(/^#/,'')||'/')==='/results')route();
+  }
+  // 每日自动更新：缺失年份 → 后台补爬（内置版不自动爬，保持"双击打开即用"；需要更新时在数据中心手动刷新）
+  const today=new Date().toISOString().slice(0,10);
+  const last=LS.get('lastCrawl','');
+  const stale=cached.length&&last!==today;
+  const missing=ALL_CRAWL_YEARS.filter(y=>{const p=Store.years[y];return !p||(y>=SUPP_MIN_YEAR&&(p.rankOnly||(p.suppAt&&(!p.suppComplete||p.suppSource!==SUPP_SRC))));}); // 缺年份、老高考年（≥2024）未补抓或补抓未完成/来源过时；2023暂停补抓
+  if(window.__GB_BUILTIN_OK){
+    if(missing.length)dcLog(`内置数据不含 ${missing.join('、')} 年完整录取数据，需要补抓时请先运行本目录 启动网站.bat，再到数据中心点"立即刷新全部数据"`);
+  }
+  else if(missing.length){dcLog(`检测到缺失/不完整年份 ${missing.join('、')}，后台自动爬取（老高考年份自动转掌上高考补抓）…`);autoCrawl(missing,true);}
+}
+boot();
+</script>
+</body>
+</html>
